@@ -37,12 +37,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { uploadAdMedia } from '@/lib/app-settings';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { compressImageForCard, compressImageForSlide, recompressImageFromUrl } from '@/lib/image-compression';
 import { compressVideoForMobile } from '@/lib/video-compression';
 import { toast } from '@/components/ui/sonner';
 import { exportToCSV, exportToXLSX, exportToPDF } from '@/lib/export-utils';
-import { exportToEnhancedPDF } from '@/lib/export-utils-enhanced';
+import { exportToGenericPDF } from '@/lib/export-utils-generic';
 
 interface DiscoverEarnCard {
   id: string;
@@ -222,19 +221,19 @@ export default function DiscoverEarnPage() {
   const loadCards = useCallback(async () => {
     try {
       setCardsLoading(true);
-      // In Vite, API routes don't exist - query directly via Supabase
-      const client = supabaseAdmin || supabase;
       
-      const { data, error } = await client
-        .from('discover_earn_cards')
-        .select('*')
-        .order('display_order', { ascending: true });
-      
-      if (error) {
-        throw error;
+      // Use API route to bypass RLS issues on client
+      const response = await fetch('/api/admin/discover-earn');
+      if (!response.ok) {
+        throw new Error(`Failed to load cards: ${response.statusText}`);
       }
       
-      const cards = (data || []) as DiscoverEarnCard[];
+      const result = await response.json();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      const cards = (result.cards || []) as DiscoverEarnCard[];
       setCards(cards);
     } catch (error) {
       console.error('Exception loading cards:', error);
@@ -248,19 +247,19 @@ export default function DiscoverEarnPage() {
   const loadSlides = useCallback(async () => {
     try {
       setSlidesLoading(true);
-      // In Vite, API routes don't exist - query directly via Supabase
-      const client = supabaseAdmin || supabase;
       
-      const { data, error } = await client
-        .from('hero_slides')
-        .select('*')
-        .order('display_order', { ascending: true });
-      
-      if (error) {
-        throw error;
+      // Use API route to bypass RLS issues on client
+      const response = await fetch('/api/admin/hero-slides');
+      if (!response.ok) {
+        throw new Error(`Failed to load slides: ${response.statusText}`);
       }
       
-      const slides = (data || []) as HeroSlide[];
+      const result = await response.json();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      const slides = (result.slides || []) as HeroSlide[];
       setSlides(slides);
     } catch (error) {
       console.error('Exception loading slides:', error);
@@ -274,21 +273,20 @@ export default function DiscoverEarnPage() {
   const loadEvents = useCallback(async () => {
     try {
       setEventsLoading(true);
-      // In Vite, API routes don't exist - query directly via Supabase
-      const client = supabaseAdmin || supabase;
       
-      const { data, error } = await client
-        .from('community_events')
-        .select('*')
-        .order('event_date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
+      // Use API route to bypass RLS issues on client
+      const response = await fetch('/api/admin/community-events');
+      if (!response.ok) {
+        throw new Error(`Failed to load events: ${response.statusText}`);
       }
       
-      const events = (data || []) as CommunityEvent[];
+      const result = await response.json();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      const events = (result.events || []) as CommunityEvent[];
+      
       events.sort((a, b) => {
         if (a.status !== b.status) {
             if (a.status === 'upcoming') return -1;
@@ -314,19 +312,19 @@ export default function DiscoverEarnPage() {
   const loadVideos = useCallback(async () => {
     try {
       setVideosLoading(true);
-      // In Vite, API routes don't exist - query directly via Supabase
-      const client = supabaseAdmin || supabase;
       
-      const { data, error } = await client
-        .from('watch_ads_videos')
-        .select('*')
-        .order('display_order', { ascending: true });
-      
-      if (error) {
-        throw error;
+      // Use API route to bypass RLS issues on client
+      const response = await fetch('/api/admin/watch-ads');
+      if (!response.ok) {
+        throw new Error(`Failed to load videos: ${response.statusText}`);
       }
       
-      const videos = (data || []) as WatchAdsVideo[];
+      const result = await response.json();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      const videos = (result.videos || []) as WatchAdsVideo[];
       setVideos(videos);
     } catch (error) {
       console.error('Error loading videos:', error);
@@ -341,44 +339,33 @@ export default function DiscoverEarnPage() {
     try {
       setStatsLoading(true);
       setStatsError('');
-
-      // In Vite, API routes don't exist - query directly via Supabase
-      const client = supabaseAdmin || supabase;
       
-      // Build query for video_watches
-      let query = client
-        .from('video_watches')
-        .select(`
-          *,
-          video:watch_ads_videos(*),
-          user:users(id, email, full_name)
-        `);
+      // Build query params
+      const params = new URLSearchParams();
+      if (statsFilters.video_id) params.append('video_id', statsFilters.video_id);
+      if (statsFilters.user_id) params.append('user_id', statsFilters.user_id);
+      if (statsFilters.start_date) params.append('start_date', statsFilters.start_date);
+      if (statsFilters.end_date) params.append('end_date', statsFilters.end_date);
       
-      if (statsFilters.video_id) {
-        query = query.eq('video_id', statsFilters.video_id);
-      }
-      if (statsFilters.user_id) {
-        query = query.eq('user_id', statsFilters.user_id);
-      }
-      if (statsFilters.start_date) {
-        query = query.gte('created_at', statsFilters.start_date);
-      }
-      if (statsFilters.end_date) {
-        query = query.lte('created_at', statsFilters.end_date);
+      // Use API route to bypass RLS issues on client
+      const response = await fetch(`/api/admin/watch-stats?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load stats: ${response.statusText}`);
       }
       
-      const { data: watches, error } = await query.order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
+      const result = await response.json();
+      if (result.error) {
+        throw new Error(result.error);
       }
+      
+      const watches = result.watches || [];
       
       // Calculate stats from watches data
-      const totalWatches = watches?.length || 0;
-      const qualifiedWatches = watches?.filter(w => w.is_qualified).length || 0;
-      const totalCredits = watches?.reduce((sum, w) => sum + (w.credits_awarded || 0), 0) || 0;
-      const uniqueUsers = new Set(watches?.map(w => w.user_id)).size;
-      const uniqueVideos = new Set(watches?.map(w => w.video_id)).size;
+      const totalWatches = watches.length;
+      const qualifiedWatches = watches.filter((w: any) => w.is_qualified).length;
+      const totalCredits = watches.reduce((sum: number, w: any) => sum + (w.credits_awarded || 0), 0);
+      const uniqueUsers = new Set(watches.map((w: any) => w.user_id)).size;
+      const uniqueVideos = new Set(watches.map((w: any) => w.video_id)).size;
       
       setStats({
         totalWatches,
@@ -386,7 +373,7 @@ export default function DiscoverEarnPage() {
         totalCredits,
         uniqueUsers,
         uniqueVideos,
-        watches: watches || []
+        watches
       });
     } catch (err: any) {
       console.error('Error loading stats:', err);
@@ -808,7 +795,7 @@ export default function DiscoverEarnPage() {
         credits: u.total_credits || 0
       })) || [];
 
-    await exportToEnhancedPDF({
+    await exportToGenericPDF({
       title: 'Watch Ads Statistics - Summary Report',
       filename: `${filename}.pdf`,
       columns,
@@ -825,17 +812,17 @@ export default function DiscoverEarnPage() {
         avg_watch_duration_seconds: stats.summary.avg_watch_duration_seconds,
         completion_rate: stats.summary.completion_rate
       },
-      dateRange: {
-        start_date: statsFilters.start_date || undefined,
-        end_date: statsFilters.end_date || undefined
-      },
-      filters: {
-        video_id: statsFilters.video_id || undefined,
-        user_id: statsFilters.user_id || undefined
-      },
       topPerformers: {
-        topVideos,
-        topUsers
+        topVideos: topVideos.map((v: any) => ({
+            name: v.title,
+            count: v.watches,
+            value: v.credits
+        })),
+        topUsers: topUsers.map((u: any) => ({
+            name: u.name,
+            count: u.watches,
+            value: u.credits
+        }))
       }
     });
     
@@ -868,14 +855,6 @@ export default function DiscoverEarnPage() {
     stableReloadAllData
   );
   
-  // Explicit cleanup to ensure background refresh stops when component unmounts
-  useEffect(() => {
-    return () => {
-      // Stop background refresh when component unmounts
-      backgroundRefreshService.stopBackgroundRefresh('discover-earn-page');
-    };
-  }, []);
-
   // Realtime subscriptions - updates instantly when data changes (same pattern as Collections)
   const { isConnected } = useRealtimeConnection(
     [
@@ -1016,19 +995,21 @@ export default function DiscoverEarnPage() {
   const saveCard = async (cardId: string) => {
     try {
       setSaving(true);
-      // In Vite, API routes don't exist - update directly via Supabase
-      const client = supabaseAdmin || supabase;
       
-      const { error } = await client
-        .from('discover_earn_cards')
-        .update({
-          ...editForm,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', cardId);
+      const response = await fetch('/api/admin/discover-earn', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: cardId,
+          ...editForm
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to save card');
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to save card');
       }
 
       toast.success('Card updated successfully');
@@ -1045,19 +1026,20 @@ export default function DiscoverEarnPage() {
 
   const toggleActive = async (card: DiscoverEarnCard) => {
     try {
-      // In Vite, API routes don't exist - update directly via Supabase
-      const client = supabaseAdmin || supabase;
-      
-      const { error } = await client
-        .from('discover_earn_cards')
-        .update({
-          is_active: !card.is_active,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', card.id);
+      const response = await fetch('/api/admin/discover-earn', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: card.id,
+          is_active: !card.is_active
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to update card');
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to update card');
       }
 
       toast.success(`Card ${!card.is_active ? 'activated' : 'deactivated'}`);
@@ -1108,19 +1090,21 @@ export default function DiscoverEarnPage() {
   const saveSlide = async (slideId: string) => {
     try {
       setSavingSlide(true);
-      // In Vite, API routes don't exist - update directly via Supabase
-      const client = supabaseAdmin || supabase;
       
-      const { error } = await client
-        .from('hero_slides')
-        .update({
-          ...editSlideForm,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', slideId);
+      const response = await fetch('/api/admin/hero-slides', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: slideId,
+          ...editSlideForm
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to save slide');
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to save slide');
       }
 
       toast.success('Slide updated successfully');
@@ -1137,19 +1121,20 @@ export default function DiscoverEarnPage() {
 
   const toggleSlideActive = async (slide: HeroSlide) => {
     try {
-      // In Vite, API routes don't exist - update directly via Supabase
-      const client = supabaseAdmin || supabase;
-      
-      const { error } = await client
-        .from('hero_slides')
-        .update({
-          is_active: !slide.is_active,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', slide.id);
+      const response = await fetch('/api/admin/hero-slides', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: slide.id,
+          is_active: !slide.is_active
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to update slide');
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to update slide');
       }
 
       toast.success(`Slide ${!slide.is_active ? 'activated' : 'deactivated'}`);
@@ -1196,19 +1181,21 @@ export default function DiscoverEarnPage() {
   const saveVideo = async (videoId: string) => {
     try {
       setSavingVideo(true);
-      // In Vite, API routes don't exist - update directly via Supabase
-      const client = supabaseAdmin || supabase;
       
-      const { error } = await client
-        .from('watch_ads_videos')
-        .update({
-          ...editVideoForm,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', videoId);
+      const response = await fetch('/api/admin/watch-ads', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: videoId,
+          ...editVideoForm
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to save video');
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to save video');
       }
 
       toast.success('Video updated successfully');
@@ -1225,26 +1212,27 @@ export default function DiscoverEarnPage() {
 
   const toggleVideoActive = async (video: WatchAdsVideo) => {
     try {
-      // In Vite, API routes don't exist - update directly via Supabase
-      const client = supabaseAdmin || supabase;
-      
-      const { error } = await client
-        .from('watch_ads_videos')
-        .update({
-          is_active: !video.is_active,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', video.id);
+      const response = await fetch('/api/admin/watch-ads', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: video.id,
+          is_active: !video.is_active
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to update video');
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to update video');
       }
 
       toast.success(`Video ${!video.is_active ? 'activated' : 'deactivated'}`);
       loadVideos();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling video:', error);
-      toast.error('Failed to update video');
+      toast.error(error.message || 'Failed to update video');
     }
   };
 
@@ -1254,19 +1242,21 @@ export default function DiscoverEarnPage() {
     }
 
     try {
-      const response = await fetch(`/api/watch-ads/videos?id=${videoId}`, {
+      // Use admin API route for consistency
+      const response = await fetch(`/api/admin/watch-ads?id=${videoId}`, {
         method: 'DELETE'
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete video');
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to delete video');
       }
 
       toast.success('Video deleted successfully');
       loadVideos();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting video:', error);
-      toast.error('Failed to delete video');
+      toast.error(error.message || 'Failed to delete video');
     }
   };
 
@@ -1281,18 +1271,20 @@ export default function DiscoverEarnPage() {
       setCreatingEvent(true);
       setSavingEvent(true);
 
-      // In Vite, API routes don't exist - create directly via Supabase
-      const client = supabaseAdmin || supabase;
-      
-      const { error } = await client
-        .from('community_events')
-        .insert({
+      const response = await fetch('/api/admin/community-events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           ...newEventForm,
           participants: newEventForm.participants ?? 0
-        });
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to create event');
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to create event');
       }
 
       toast.success('Event created successfully');
@@ -1320,20 +1312,20 @@ export default function DiscoverEarnPage() {
     try {
       setSavingEvent(true);
 
-      // In Vite, API routes don't exist - update directly via Supabase
-      const client = supabaseAdmin || supabase;
-      
-      const { error } = await client
-        .from('community_events')
-        .update({
-          ...editEventForm,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editingEvent);
+      const response = await fetch('/api/admin/community-events', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: editingEvent,
+          ...editEventForm
+        }),
+      });
 
-      if (error) {
-        const message = error.message || 'Failed to update event';
-        throw new Error(message);
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to update event');
       }
 
       toast.success('Event updated successfully');
@@ -1654,15 +1646,17 @@ export default function DiscoverEarnPage() {
                           return;
                         }
                         setCreatingCard(true);
-                        // In Vite, API routes don't exist - create directly via Supabase
-                        const client = supabaseAdmin || supabase;
-                        
-                        const { error } = await client
-                          .from('discover_earn_cards')
-                          .insert(newCardForm);
+                        const response = await fetch('/api/admin/discover-earn', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify(newCardForm),
+                        });
 
-                        if (error) {
-                          throw new Error(error.message || 'Failed to create card');
+                        if (!response.ok) {
+                          const result = await response.json();
+                          throw new Error(result.error || 'Failed to create card');
                         }
 
                         toast.success('Card created successfully');
@@ -1766,20 +1760,23 @@ export default function DiscoverEarnPage() {
                               }
                               if (result.url) {
                                 // Update the card with new compressed image
-                                const client = supabaseAdmin || supabase;
-                                const { error: updateError } = await client
-                                  .from('discover_earn_cards')
-                                  .update({
-                                    image_url: result.url,
-                                    updated_at: new Date().toISOString()
-                                  })
-                                  .eq('id', card.id);
+                                const response = await fetch('/api/admin/discover-earn', {
+                                  method: 'PUT',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    id: card.id,
+                                    image_url: result.url
+                                  }),
+                                });
                                 
-                                if (!updateError) {
+                                if (response.ok) {
                                   toast.success('Image re-compressed successfully');
                                   loadCards(); // Reload to show new image
                                 } else {
-                                  toast.error('Failed to update image');
+                                  const result = await response.json();
+                                  toast.error(result.error || 'Failed to update image');
                                 }
                               }
                             } catch (error) {
@@ -2304,15 +2301,17 @@ export default function DiscoverEarnPage() {
                           return;
                         }
                         setCreatingSlide(true);
-                        // In Vite, API routes don't exist - create directly via Supabase
-                        const client = supabaseAdmin || supabase;
-                        
-                        const { error } = await client
-                          .from('hero_slides')
-                          .insert(newSlideForm);
+                        const response = await fetch('/api/admin/hero-slides', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify(newSlideForm),
+                        });
 
-                        if (error) {
-                          throw new Error(error.message || 'Failed to create slide');
+                        if (!response.ok) {
+                          const result = await response.json();
+                          throw new Error(result.error || 'Failed to create slide');
                         }
 
                         toast.success('Slide created successfully');
@@ -2412,20 +2411,23 @@ export default function DiscoverEarnPage() {
                                 }
                                 if (result.url) {
                                   // Update the slide with new compressed image
-                                  const client = supabaseAdmin || supabase;
-                                  const { error: updateError } = await client
-                                    .from('hero_slides')
-                                    .update({
-                                      image_url: result.url,
-                                      updated_at: new Date().toISOString()
-                                    })
-                                    .eq('id', slide.id);
+                                  const response = await fetch('/api/admin/hero-slides', {
+                                    method: 'PUT',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                      id: slide.id,
+                                      image_url: result.url
+                                    }),
+                                  });
                                   
-                                  if (!updateError) {
+                                  if (response.ok) {
                                     toast.success('Image re-compressed successfully');
                                     loadSlides(); // Reload to show new image
                                   } else {
-                                    toast.error('Failed to update image');
+                                    const result = await response.json();
+                                    toast.error(result.error || 'Failed to update image');
                                   }
                                 }
                               } catch (error) {
@@ -3640,19 +3642,18 @@ export default function DiscoverEarnPage() {
                             return;
                           }
                           setCreatingVideo(true);
-                          // In Vite, API routes don't exist - create directly via Supabase
-                          const client = supabaseAdmin || supabase;
                           
-                          const { error } = await client
-                            .from('watch_ads_videos')
-                            .insert(newVideoForm);
+                          const response = await fetch('/api/admin/watch-ads', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(newVideoForm),
+                          });
 
-                          if (error) {
-                            const errorMessage = error.details 
-                              ? `${error.message}: ${error.details}`
-                              : error.message || 'Failed to create video';
-                            console.error('Video creation error:', error);
-                            throw new Error(errorMessage);
+                          if (!response.ok) {
+                            const result = await response.json();
+                            throw new Error(result.error || 'Failed to create video');
                           }
 
                           toast.success('Video created successfully');

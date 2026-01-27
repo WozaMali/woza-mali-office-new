@@ -96,14 +96,6 @@ export default function CollectionsContent() {
     stableLoadCollections
   );
   
-  // Explicit cleanup to ensure background refresh stops when component unmounts
-  useEffect(() => {
-    return () => {
-      // Stop background refresh when component unmounts
-      backgroundRefreshService.stopBackgroundRefresh('collections-page');
-    };
-  }, []);
-
   // Realtime subscriptions - updates instantly when data changes
   const { isConnected } = useRealtimeConnection(
     [

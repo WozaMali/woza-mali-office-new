@@ -1,44 +1,84 @@
-import { useEffect, useRef } from 'react'
-import { supabase } from '@/lib/supabase'
-import { notificationManager } from '@/lib/notificationManager'
-import { useAuth } from '@/hooks/use-auth'
+import { useEffect, useState, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-export function useRealtimeConnection() {
-  const { user } = useAuth()
-  const channelRef = useRef<any>(null)
-
-  useEffect(() => {
-    if (!user) return
-
-    const channel = supabase
-      .channel('admin_dashboard_updates')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public' },
-        (payload: any) => {
-          const table = payload.table
-          const eventType = payload.eventType
-          if (table === 'collections' && eventType === 'INSERT') {
-            notificationManager.success('New collection added')
-          } else if (table === 'users' && eventType === 'INSERT') {
-            notificationManager.info('New user registered')
-          } else if (table === 'withdrawals' && eventType === 'INSERT') {
-            notificationManager.warning('New withdrawal request')
-          }
-        }
-      )
-      .subscribe()
-
-    channelRef.current = channel
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-        channelRef.current = null
-      }
-    }
-  }, [user])
-
-  return { isConnected: !!channelRef.current }
+export interface SubscriptionConfig {
+  table: string;
+  schema?: string;
+  filter?: string;
+  onUpdate?: (payload: any) => void;
+  onInsert?: (payload: any) => void;
+  onDelete?: (payload: any) => void;
 }
 
+export function useRealtimeConnection(
+  subscriptions: SubscriptionConfig[],
+  enabled: boolean = true
+) {
+  const [isConnected, setIsConnected] = useState(false);
+  const subscriptionsRef = useRef(subscriptions);
+
+  // Update ref if subscriptions change deeply (simplified check or just always update ref but use a key for effect)
+  // For now, we'll assume the table/filter structure is stable and only callbacks might change.
+  // Actually, to handle inline function definitions without re-subscribing, we should use a ref for the current subscriptions
+  // and call the current ref's callbacks in the event handler.
+  
+  useEffect(() => {
+    subscriptionsRef.current = subscriptions;
+  }, [subscriptions]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const channels: RealtimeChannel[] = [];
+
+    // We use the initial subscriptions config for setting up channels
+    // If the table/filter changes, this effect should re-run.
+    // We can create a key string to detect structural changes.
+    
+    const configKey = subscriptions.map(s => `${s.schema || 'public'}:${s.table}:${s.filter || ''}`).join('|');
+
+    subscriptions.forEach((sub, index) => {
+      const channel = supabase
+        .channel(`public:${sub.table}:${index}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: sub.schema || 'public',
+            table: sub.table,
+            filter: sub.filter,
+          },
+          (payload) => {
+            // Always use the latest callbacks from the ref
+            const currentSub = subscriptionsRef.current[index];
+            if (!currentSub) return;
+
+            if (payload.eventType === 'INSERT' && currentSub.onInsert) {
+              currentSub.onInsert(payload);
+            } else if (payload.eventType === 'UPDATE' && currentSub.onUpdate) {
+              currentSub.onUpdate(payload);
+            } else if (payload.eventType === 'DELETE' && currentSub.onDelete) {
+              currentSub.onDelete(payload);
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setIsConnected(true);
+          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+            setIsConnected(false);
+          }
+        });
+
+      channels.push(channel);
+    });
+
+    return () => {
+      channels.forEach((channel) => supabase.removeChannel(channel));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, subscriptions.map(s => `${s.schema || 'public'}:${s.table}:${s.filter || ''}`).join('|')]);
+
+  return { isConnected };
+}

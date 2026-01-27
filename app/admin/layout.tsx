@@ -87,9 +87,9 @@ export default function AdminLayout({
     if (mounted && isSuperAdmin) {
       const usersIndex = items.findIndex(i => i.page === 'users');
       const insertIndex = usersIndex >= 0 ? usersIndex + 1 : items.length;
-      items.splice(insertIndex, 0, { name: 'Team Members', page: 'team-members', href: '/team-members', icon: UserPlus });
+      items.splice(insertIndex, 0, { name: 'Team Members', page: 'team-members', href: '/admin/team-members', icon: UserPlus });
       // Add Admin Activity page for superadmins
-      items.splice(insertIndex + 1, 0, { name: 'Admin Activity', page: 'admin-activity', href: '/admin-activity', icon: Activity });
+      items.splice(insertIndex + 1, 0, { name: 'Admin Activity', page: 'admin-activity', href: '/admin/admin-activity', icon: Activity });
     }
     return items;
   }, [baseNavigation, mounted, isSuperAdmin]);

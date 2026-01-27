@@ -14,8 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
-import { performExportToGenericPDF } from '@/lib/export-utils-generic';
-import { performExportToPDF, performExportToXLSX, performExportToCSV } from '@/lib/export-utils';
+import { exportToGenericPDF } from '@/lib/export-utils-generic';
+import { exportToPDF, exportToXLSX, exportToCSV } from '@/lib/export-utils';
 
 interface ExportRequest {
   id: string;
@@ -45,7 +45,7 @@ async function executeExportFromRequest(request: ExportRequest) {
 
   switch (export_type) {
     case 'generic_pdf':
-      await performExportToGenericPDF({
+      await exportToGenericPDF({
         title: report_title,
         filename,
         columns: request_data.columns || [],
@@ -57,7 +57,7 @@ async function executeExportFromRequest(request: ExportRequest) {
       });
       break;
     case 'pdf':
-      await performExportToPDF(
+      await exportToPDF(
         report_title,
         filename,
         request_data.columns || [],
@@ -66,7 +66,7 @@ async function executeExportFromRequest(request: ExportRequest) {
       );
       break;
     case 'xlsx':
-      await performExportToXLSX(
+      await exportToXLSX(
         filename,
         request_data.sheetName || 'Sheet1',
         request_data.columns || [],
@@ -75,7 +75,7 @@ async function executeExportFromRequest(request: ExportRequest) {
       );
       break;
     case 'csv':
-      await performExportToCSV(
+      await exportToCSV(
         filename,
         request_data.columns || [],
         request_data.rows || []
