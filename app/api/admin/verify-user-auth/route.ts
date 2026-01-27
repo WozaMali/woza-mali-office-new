@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           last_sign_in_at: user.last_sign_in_at,
           user_metadata: user.user_metadata,
           app_metadata: user.app_metadata,
-          has_password: !!user.encrypted_password
+          has_password: !!(user as any).encrypted_password
         },
         public_user: publicUser ? {
           id: publicUser.id,

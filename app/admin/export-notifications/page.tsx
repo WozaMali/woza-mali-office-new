@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
-import { exportToGenericPDF } from '@/lib/export-utils-generic';
+import { performExportToGenericPDF } from '@/lib/export-utils-generic';
 import { exportToPDF, exportToXLSX, exportToCSV } from '@/lib/export-utils';
 
 interface ExportRequest {
@@ -28,6 +28,7 @@ interface ExportRequest {
   created_at: string;
   updated_at: string;
   approved_at?: string;
+  expires_at?: string;
   rejection_reason?: string;
   requested_by_user?: {
     full_name?: string;
@@ -45,7 +46,7 @@ async function executeExportFromRequest(request: ExportRequest) {
 
   switch (export_type) {
     case 'generic_pdf':
-      await exportToGenericPDF({
+      await performExportToGenericPDF({
         title: report_title,
         filename,
         columns: request_data.columns || [],

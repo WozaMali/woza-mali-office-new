@@ -11,22 +11,22 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { UnifiedAdminService } from '@/lib/unified-admin-service';
-import type { CollectionData } from '@/lib/unified-admin-service';
-import { useAuth } from '@/hooks/use-auth';
-import { supabase } from '@/lib/supabase';
-import { useBackgroundRefresh } from '@/hooks/useBackgroundRefresh';
-import { useRealtimeConnection } from '@/hooks/useRealtimeConnection';
-import { backgroundRefreshService } from '@/lib/backgroundRefreshService';
+import { UnifiedAdminService } from '../../../src/lib/unified-admin-service';
+import type { CollectionData } from '../../../src/lib/unified-admin-service';
+import { useAuth } from '../../../src/hooks/use-auth';
+import { supabase } from '../../../src/lib/supabase';
+import { useBackgroundRefresh } from '../../../src/hooks/useBackgroundRefresh';
+import { useRealtimeConnection } from '../../../src/hooks/useRealtimeConnection';
+import { backgroundRefreshService } from '../../../src/lib/backgroundRefreshService';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, CheckCircle, XCircle, Clock, Search, Filter, Package, Users, Calendar, TrendingUp, Activity, Check, X, Copy, Settings, FileDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { softDeleteCollection } from '@/lib/soft-delete-service';
-import { clearPickupsCache } from '@/lib/admin-services';
+import { softDeleteCollection } from '../../../src/lib/soft-delete-service';
+import { clearPickupsCache } from '../../../src/lib/admin-services';
 import { ResetTransactionsDialog } from '@/components/ResetTransactionsDialog';
-import { exportToGenericPDF } from '@/lib/export-utils-generic';
+import { exportToGenericPDF } from '../../../src/lib/export-utils-generic';
 
 export default function CollectionsContent() {
   // Collections page - uses same pattern as withdrawals page
@@ -96,22 +96,30 @@ export default function CollectionsContent() {
     stableLoadCollections
   );
   
+  // Explicit cleanup to ensure background refresh stops when component unmounts
+  useEffect(() => {
+    return () => {
+      // Stop background refresh when component unmounts
+      backgroundRefreshService.stopBackgroundRefresh('collections-page');
+    };
+  }, []);
+
   // Realtime subscriptions - updates instantly when data changes
   const { isConnected } = useRealtimeConnection(
     [
       {
         table: 'unified_collections',
-        onUpdate: (payload) => {
+        onUpdate: (payload: any) => {
           console.log('📡 Collection updated:', payload);
           setRows(prev => prev.map(row => 
             row.id === payload.new?.id ? { ...row, ...payload.new } : row
           ));
         },
-        onInsert: (payload) => {
+        onInsert: (payload: any) => {
           console.log('📡 New collection:', payload);
           setRows(prev => [payload.new, ...prev]);
         },
-        onDelete: (payload) => {
+        onDelete: (payload: any) => {
           console.log('📡 Collection deleted:', payload);
           setRows(prev => prev.filter(c => c.id !== payload.old?.id));
         }

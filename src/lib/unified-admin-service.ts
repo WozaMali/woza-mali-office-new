@@ -36,12 +36,15 @@ export interface AdminDashboardData {
 export interface CollectionData {
   id: string;
   user_id: string;
+  customer_id?: string;
   collector_id: string;
   pickup_address_id: string;
   material_type: string;
   material_rate_per_kg?: number;
   computed_value?: number;
   weight_kg: number;
+  total_weight_kg?: number;
+  total_value?: number;
   status: 'pending' | 'submitted' | 'approved' | 'rejected';
   notes?: string;
   created_at: string;
@@ -497,6 +500,7 @@ export class UnifiedAdminService {
         return {
           id: r.id,
           user_id: r.customer_id, // Use customer_id as user_id for compatibility
+          customer_id: r.customer_id,
           collector_id: r.collector_id,
           pickup_address_id: r.pickup_address_id,
           material_type: 'Mixed', // unified_collections doesn't have material_type, use default

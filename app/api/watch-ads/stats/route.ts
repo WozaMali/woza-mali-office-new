@@ -157,10 +157,10 @@ export async function GET(request: NextRequest) {
 
     // Fetch user and video data separately
     const userIds = watches && watches.length > 0 
-      ? [...new Set(watches.map(w => w.user_id).filter(Boolean))] 
+      ? Array.from(new Set(watches.map((w: any) => w.user_id).filter(Boolean)))
       : [];
     const videoIds = watches && watches.length > 0
-      ? [...new Set(watches.map(w => w.video_id).filter(Boolean))]
+      ? Array.from(new Set(watches.map((w: any) => w.video_id).filter(Boolean)))
       : [];
 
     // Fetch users - handle gracefully if table doesn't exist or has errors
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
           .in('id', userIds);
         
         if (!usersError && users && users.length > 0) {
-          users.forEach(user => {
+          users.forEach((user: any) => {
             usersMap[user.id] = user;
           });
         }
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
           .in('id', videoIds);
         
         if (!videosError && videos && videos.length > 0) {
-          videos.forEach(video => {
+          videos.forEach((video: any) => {
             videosMap[video.id] = video;
           });
         }
@@ -230,7 +230,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Enrich watches with user and video data
-    const enrichedWatches = watches?.map(watch => ({
+    const enrichedWatches = watches?.map((watch: any) => ({
       ...watch,
       user: usersMap[watch.user_id] || null,
       video: videosMap[watch.video_id] || null

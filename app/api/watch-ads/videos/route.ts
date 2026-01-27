@@ -5,7 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Create admin client with service role key
-let supabaseAdmin: ReturnType<typeof createClient> | null = null;
+let supabaseAdmin: any = null;
 
 if (supabaseUrl && supabaseServiceKey) {
   supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     // If userId provided, check which videos user can watch (daily limits)
     if (userId && !adminView) {
       const videosWithAvailability = await Promise.all(
-        (videos || []).map(async (video) => {
+        (videos || []).map(async (video: any) => {
           const { data: canWatch } = await supabaseAdmin!.rpc('can_user_watch_video', {
             p_user_id: userId,
             p_video_id: video.id

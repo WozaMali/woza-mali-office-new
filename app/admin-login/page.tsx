@@ -82,7 +82,7 @@ const validatePassword = (password: string): { isValid: boolean; errors: string[
 function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo') || '/dashboard'; // Default to dashboard if no return path
+  const returnTo = searchParams.get('returnTo') || '/admin/dashboard'; // Default to admin dashboard if no return path
   const [activeTab, setActiveTab] = useState<'admin' | 'superadmin'>('admin');
   const [email, setEmail] = useState('');
   const [superAdminEmail, setSuperAdminEmail] = useState(''); // Separate email for superadmin

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const fromDate = searchParams.get('fromDate');
     const toDate = searchParams.get('toDate');
 
-    let query = supabaseAdmin
+    let query = supabaseAdmin!
       .from('community_events')
       .select('*')
       .order('event_date', { ascending: true })
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin!
       .from('community_events')
       .insert({
         title,
@@ -152,7 +152,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin!
       .from('community_events')
       .update({
         ...updates,
@@ -191,7 +191,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabaseAdmin!
       .from('community_events')
       .delete()
       .eq('id', id);

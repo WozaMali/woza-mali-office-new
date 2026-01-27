@@ -64,21 +64,21 @@ export default function AdminLayout({
   // Note: Use source paths (e.g., /discover-earn) not destination paths (e.g., /admin/discover-earn)
   // because Next.js rewrites handle the routing automatically
   const baseNavigation = useMemo(() => [
-    { name: 'Dashboard', page: 'dashboard', href: '/admin/dashboard', icon: BarChart3 },
-    { name: 'Collections', page: 'collections', href: '/admin/collections', icon: Calendar },
-    { name: 'Pickups', page: 'pickups', href: '/admin/pickups', icon: Package },
-    { name: 'Withdrawals', page: 'withdrawals', href: '/admin/withdrawals', icon: CreditCard },
-    { name: 'Rewards', page: 'rewards', href: '/admin/rewards', icon: Gift },
-    { name: 'Discover & Earn', page: 'discover-earn', href: '/admin/discover-earn', icon: Sparkles },
-    { name: 'Green Scholar Fund', page: 'green-scholar', href: '/admin/green-scholar', icon: TreePine },
-    { name: 'Beneficiaries', page: 'beneficiaries', href: '/admin/beneficiaries', icon: School },
-    { name: 'Transactions', page: 'transactions', href: '/admin/transactions', icon: Wallet },
-    { name: 'Resident Summary', page: 'tiers', href: '/admin/tiers', icon: Crown },
-    { name: 'Users', page: 'users', href: '/admin/users', icon: Users },
-    { name: 'Analytics', page: 'analytics', href: '/admin/analytics', icon: TrendingUp },
-    { name: 'Export Notifications', page: 'export-notifications', href: '/admin/export-notifications', icon: Bell },
-    { name: 'Settings', page: 'settings', href: '/admin/settings', icon: Settings },
-    { name: 'Config', page: 'config', href: '/admin/config', icon: Settings },
+    { name: 'Dashboard', page: 'dashboard', href: '/dashboard', icon: BarChart3 },
+    { name: 'Collections', page: 'collections', href: '/collections', icon: Calendar },
+    { name: 'Pickups', page: 'pickups', href: '/pickups', icon: Package },
+    { name: 'Withdrawals', page: 'withdrawals', href: '/withdrawals', icon: CreditCard },
+    { name: 'Rewards', page: 'rewards', href: '/rewards', icon: Gift },
+    { name: 'Discover & Earn', page: 'discover-earn', href: '/discover-earn', icon: Sparkles },
+    { name: 'Green Scholar Fund', page: 'green-scholar', href: '/green-scholar', icon: TreePine },
+    { name: 'Beneficiaries', page: 'beneficiaries', href: '/beneficiaries', icon: School },
+    { name: 'Transactions', page: 'transactions', href: '/transactions', icon: Wallet },
+    { name: 'Resident Summary', page: 'tiers', href: '/tiers', icon: Crown },
+    { name: 'Users', page: 'users', href: '/users', icon: Users },
+    { name: 'Analytics', page: 'analytics', href: '/analytics', icon: TrendingUp },
+    { name: 'Export Notifications', page: 'export-notifications', href: '/export-notifications', icon: Bell },
+    { name: 'Settings', page: 'settings', href: '/settings', icon: Settings },
+    { name: 'Config', page: 'config', href: '/config', icon: Settings },
   ], []);
 
   const navigation = useMemo(() => {
@@ -87,9 +87,9 @@ export default function AdminLayout({
     if (mounted && isSuperAdmin) {
       const usersIndex = items.findIndex(i => i.page === 'users');
       const insertIndex = usersIndex >= 0 ? usersIndex + 1 : items.length;
-      items.splice(insertIndex, 0, { name: 'Team Members', page: 'team-members', href: '/admin/team-members', icon: UserPlus });
+      items.splice(insertIndex, 0, { name: 'Team Members', page: 'team-members', href: '/team-members', icon: UserPlus });
       // Add Admin Activity page for superadmins
-      items.splice(insertIndex + 1, 0, { name: 'Admin Activity', page: 'admin-activity', href: '/admin/admin-activity', icon: Activity });
+      items.splice(insertIndex + 1, 0, { name: 'Admin Activity', page: 'admin-activity', href: '/admin-activity', icon: Activity });
     }
     return items;
   }, [baseNavigation, mounted, isSuperAdmin]);

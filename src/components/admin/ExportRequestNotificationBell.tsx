@@ -13,8 +13,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { exportToGenericPDF } from '@/lib/export-utils-generic';
-import { exportToXLSX, exportToCSV } from '@/lib/export-utils';
+import { performExportToGenericPDF } from '@/lib/export-utils-generic';
+import { exportToPDF, exportToXLSX, exportToCSV } from '@/lib/export-utils';
 
 interface ExportRequest {
   id: string;
@@ -28,6 +28,11 @@ interface ExportRequest {
   approved_by?: string;
   approved_at?: string;
   rejection_reason?: string;
+  request_data?: {
+    columns: any[];
+    rows: any[];
+    [key: string]: any;
+  };
   requested_by_user?: {
     full_name?: string;
     email?: string;
@@ -56,12 +61,7 @@ const executeExportFromRequest = async (request: ExportRequest) => {
         await exportToXLSX(filename, 'Sheet1', columns, rows);
         break;
       case 'pdf':
-        await exportToGenericPDF({
-          title: 'Export Report',
-          filename,
-          columns,
-          rows
-        });
+        await exportToPDF('Export Report', filename, columns, rows);
         break;
       default:
         throw new Error(`Unsupported export type: ${export_type}`);
