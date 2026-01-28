@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
-
-// Create admin client with service role key
-let supabaseAdmin: ReturnType<typeof createClient> | null = null;
-
-if (supabaseUrl && supabaseServiceKey) {
-  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-}
+import { supabaseAdmin } from '@/lib/supabase';
 
 // POST - Start tracking a video watch
 export async function POST(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAdmin) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Missing Supabase environment variables' },
+        { success: false, error: 'Missing Supabase environment variables' },
         { status: 500 }
       );
     }
@@ -32,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user can watch this video
-    const { data: canWatch, error: canWatchError } = await (supabaseAdmin as any).rpc(
+    const { data: canWatch, error: canWatchError } = await supabaseAdmin.rpc(
       'can_user_watch_video',
       {
         p_user_id: user_id,
@@ -60,7 +50,7 @@ export async function POST(request: NextRequest) {
         watch_started_at: new Date().toISOString(),
         ip_address,
         user_agent
-      } as any)
+      })
       .select()
       .single();
 
@@ -85,9 +75,9 @@ export async function POST(request: NextRequest) {
 // PUT - Update video watch progress and complete it
 export async function PUT(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAdmin) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Missing Supabase environment variables' },
+        { success: false, error: 'Missing Supabase environment variables' },
         { status: 500 }
       );
     }
@@ -120,7 +110,6 @@ export async function PUT(request: NextRequest) {
     // Update watch record
     const { data: watch, error } = await supabaseAdmin
       .from('video_watches')
-      // @ts-ignore - types issue
       .update(updateData)
       .eq('id', watch_id)
       .select()
@@ -135,13 +124,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // If completed and qualifies, award credits to wallet
-    if (is_completed && watch && !(watch as any).is_qualified) {
+    if (is_completed && watch && !watch.is_qualified) {
       try {
         const { data: awardResult, error: awardError } = await supabaseAdmin.rpc(
           'award_video_watch_credits',
           {
             p_watch_id: watch_id
-          } as any
+          }
         );
 
         if (awardError) {
@@ -198,9 +187,9 @@ export async function PUT(request: NextRequest) {
 // GET - Get user's video watch history
 export async function GET(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAdmin) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Missing Supabase environment variables' },
+        { success: false, error: 'Missing Supabase environment variables' },
         { status: 500 }
       );
     }

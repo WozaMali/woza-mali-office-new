@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
-
-// Create admin client with service role key
-let supabaseAdmin: ReturnType<typeof createClient> | null = null;
-
-if (supabaseUrl && supabaseServiceKey) {
-  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-}
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET - Get all active videos (for users) or all videos (for admins)
 export async function GET(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAdmin) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Missing Supabase environment variables' },
+        { success: false, error: 'Missing Supabase environment variables' },
         { status: 500 }
       );
     }
@@ -87,9 +77,9 @@ export async function GET(request: NextRequest) {
 // POST - Create a new video (Admin only)
 export async function POST(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAdmin) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Missing Supabase environment variables' },
+        { success: false, error: 'Missing Supabase environment variables' },
         { status: 500 }
       );
     }
@@ -177,9 +167,9 @@ export async function POST(request: NextRequest) {
 // PUT - Update a video (Admin only)
 export async function PUT(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAdmin) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Missing Supabase environment variables' },
+        { success: false, error: 'Missing Supabase environment variables' },
         { status: 500 }
       );
     }
@@ -222,9 +212,9 @@ export async function PUT(request: NextRequest) {
 // DELETE - Delete a video (Admin only)
 export async function DELETE(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAdmin) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Missing Supabase environment variables' },
+        { success: false, error: 'Missing Supabase environment variables' },
         { status: 500 }
       );
     }

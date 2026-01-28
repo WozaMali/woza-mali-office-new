@@ -1,12 +1,50 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
-export function useRealtimeConnection(...args: any[]) {
-  const [isConnected, setIsConnected] = useState(true);
+export function useRealtimeConnection() {
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Stub implementation
-    setIsConnected(true);
+    console.log('Realtime connection hook mounted');
+
+    const channel = supabase.channel('realtime_channel');
+
+    channel
+      .on('broadcast', { event: 'log' }, (payload) => {
+        console.log('Realtime broadcast:', payload);
+      })
+      .on('system', { event: '*:*' }, (payload) => {
+        console.log('Realtime system event:', payload);
+        if (payload.type === 'SUBSCRIBED') {
+          setIsConnected(true);
+          setError(null);
+        } else if (payload.type === 'UNSUBSCRIBED') {
+          setIsConnected(false);
+        }
+      })
+      .on('error', (e) => {
+        console.error('Realtime channel error:', e);
+        setIsConnected(false);
+        setError(e.message || 'Realtime connection error');
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true);
+          setError(null);
+        } else if (status === 'CHANNEL_ERROR') {
+          setIsConnected(false);
+          setError('Channel subscription error');
+        } else if (status === 'CLOSED') {
+          setIsConnected(false);
+        }
+      });
+
+    return () => {
+      console.log('Realtime connection hook unmounted');
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  return { isConnected };
+  return { isConnected, error };
 }

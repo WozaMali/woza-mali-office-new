@@ -77,6 +77,9 @@ export default function UsersPage() {
         }
 
         const result = await response.json();
+        if (result?.error) {
+          throw new Error(result.error);
+        }
         const data = result.users || [];
         const pagination = result.pagination || {};
 

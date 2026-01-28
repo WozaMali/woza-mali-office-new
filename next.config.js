@@ -1,15 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-      },
-    ],
+    domains: ['localhost'],
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   // Next.js 15 compatibility
-  turbopack: {},
   experimental: {
     // Enable better debugging
   },

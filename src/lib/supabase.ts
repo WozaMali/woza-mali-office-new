@@ -31,8 +31,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Create admin client with service role key for admin operations
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+// Create admin client with service role key for admin operations (server-side only)
+// Prefer SUPABASE_SERVICE_ROLE_KEY. Fall back to NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY for legacy setups,
+// but NOTE: anything prefixed NEXT_PUBLIC is exposed to the browser and should not be used for secrets.
+const supabaseServiceKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY?.trim();
 export const supabaseAdmin = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 console.log('✅ Supabase client created successfully');

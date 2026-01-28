@@ -29,7 +29,6 @@ export interface AuthContextType {
   updateProfile: (updates: Partial<Profile>) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
-  bypassLogin: () => Promise<void>;
 }
 
 // Create Auth Context
@@ -566,17 +565,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const updatePassword = async (password: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) return { success: false, error: error.message };
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: 'An unexpected error occurred' };
-    }
-  };
-
-
   const value: AuthContextType = {
     user,
     profile,
@@ -587,7 +575,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetPassword,
     logout,
     updateProfile,
-    updatePassword,
     refreshProfile,
   };
 

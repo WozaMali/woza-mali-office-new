@@ -104,8 +104,13 @@ export default function AdminLayout({
     // Only redirect if auth check is complete and user is not authenticated
     if (!user) {
       // Preserve the current path so we can redirect back after login
-      const returnPath = pathname;
+      let returnPath = pathname;
+      // If returnPath is /dashboard, correct it to /admin/dashboard
+      if (returnPath === '/dashboard') {
+        returnPath = '/admin/dashboard';
+      }
       if (returnPath && returnPath !== '/admin-login' && returnPath !== '/admin/lock') {
+        console.log('AdminLayout: Redirecting to /admin-login with returnTo:', returnPath);
         router.push(`/admin-login?returnTo=${encodeURIComponent(returnPath)}`);
       } else {
         router.push('/admin-login');

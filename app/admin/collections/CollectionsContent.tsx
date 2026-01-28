@@ -47,18 +47,11 @@ export default function CollectionsContent() {
   // Fetch collections function - optimized for speed
   const loadCollections = useCallback(async () => {
     try {
-      // Don't set loading immediately - show existing data while fetching
+      console.log('🔄 Collections: Starting loadCollections...');
       setError(null);
-      console.log('🔄 Collections: Loading data directly from unified_collections table...');
-      
       setLoading(true);
       
-      // Direct query with timeout
-      // Since we are in a Vite/Electron app, we cannot use server-side API routes.
-      // We query Supabase directly using the authenticated client.
       const directQueryPromise = UnifiedAdminService.getAllCollections();
-      
-      // 120s timeout for the query to accommodate slower connections
       const timeoutPromise = new Promise<{ data: CollectionData[] | null, error: any }>((resolve) => 
         setTimeout(() => resolve({ data: null, error: new Error('Query timeout (120s)') }), 120000)
       );
@@ -73,6 +66,7 @@ export default function CollectionsContent() {
         console.log('📊 Collections: Loaded', data?.length || 0, 'collections from unified_collections');
         setRows(data || []);
       }
+      console.log('✅ Collections: Finished loadCollections.');
       setLoading(false);
     } catch (err) {
       console.error('❌ Collections: Exception loading from unified_collections:', err);
@@ -839,11 +833,11 @@ export default function CollectionsContent() {
                   </div>
                   <div>
                     <div className="text-gray-800">Total Weight (kg)</div>
-                    <div className="font-medium">{details.base?.weight_kg ?? 0}</div>
+                    <div className="font-medium">{details.base?.total_weight_kg ?? details.base?.weight_kg ?? 0}</div>
                   </div>
                   <div>
                     <div className="text-gray-800">Total Credits (C)</div>
-                    <div className="font-medium">{Number(details.base?.computed_value ?? 0).toFixed(2)}</div>
+                    <div className="font-medium">{Number(details.base?.total_value ?? details.base?.computed_value ?? 0).toFixed(2)}</div>
                   </div>
                 </div>
 

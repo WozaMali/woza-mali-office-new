@@ -139,8 +139,8 @@ export default function DashboardPage() {
 
   // Fetch dashboard data function - Use direct Supabase queries (Vite doesn't have API routes)
   const fetchDashboardData = useCallback(async () => {
+    console.log('🔄 Dashboard: Fetching dashboard data...');
     try {
-      // In Vite, use UnifiedAdminService.getDashboardData() directly
       const { UnifiedAdminService } = await import('@/lib/unified-admin-service');
       const { data, error } = await UnifiedAdminService.getDashboardData();
       
@@ -156,6 +156,7 @@ export default function DashboardPage() {
         return;
       }
       
+      console.log('✅ Dashboard: Data fetched successfully:', data);
       setLoading(false);
       
       startTransition(() => {
@@ -164,17 +165,17 @@ export default function DashboardPage() {
           totalPickups: data.totalCollections || 0,
           totalWeight: data.totalWeight || 0,
           totalRevenue: data.totalRevenue || 0,
-          activeUsers: data.totalUsers || 0, // Use totalUsers as activeUsers fallback
+          activeUsers: data.totalUsers || 0, 
           pendingPickups: data.pendingCollections || 0,
-          totalPayments: 0, // Not in AdminDashboardData interface, will need to calculate separately
-          pendingPayments: 0, // Not in AdminDashboardData interface, will need to calculate separately
+          totalPayments: 0, 
+          pendingPayments: 0, 
           totalWallets: data.totalWallets || 0,
           totalCashBalance: data.totalWalletBalance || 0,
-          totalCurrentPoints: data.totalWalletBalance || 0, // Use wallet balance as current points
+          totalCurrentPoints: data.totalWalletBalance || 0, 
           totalPointsEarned: data.totalPointsEarned || 0,
           totalPointsSpent: data.totalPointsSpent || 0,
           totalLifetimeEarnings: data.totalPointsEarned || 0,
-          totalVideoCredits: 0, // Not in AdminDashboardData interface, will need to calculate separately
+          totalVideoCredits: 0, 
           walletPermissionError: false,
           walletErrorMessage: ''
         });
@@ -185,7 +186,7 @@ export default function DashboardPage() {
         hasLoadedUnifiedDataRef.current = true;
       }
     } catch (error: any) {
-      console.error('❌ Dashboard: Error fetching dashboard data:', error);
+      console.error('❌ Dashboard: Exception fetching dashboard data:', error);
       setLoading(false);
     }
   }, [updateDashboardData]);
@@ -260,10 +261,7 @@ export default function DashboardPage() {
 
   // Realtime subscriptions - updates instantly when data changes
   // Always enabled (same pattern as collections page) - keeps connection stable
-  const { isConnected } = useRealtimeConnection(
-    realtimeSubscriptions,
-    true // Always enabled - same as collections page
-  );
+  const { isConnected } = useRealtimeConnection();
 
   // Initial load - use API route directly (same pattern as Collections/Pickups/Withdrawals)
   useEffect(() => {

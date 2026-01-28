@@ -335,34 +335,20 @@ export default function DiscoverEarnPage() {
       setStatsLoading(true);
       setStatsError('');
 
-      // Use server API which already does manual "joins" (no FK required) and uses service role.
-      const params = new URLSearchParams();
-      if (statsFilters.video_id) params.set('video_id', statsFilters.video_id);
-      if (statsFilters.user_id) params.set('user_id', statsFilters.user_id);
-      if (statsFilters.start_date) params.set('start_date', statsFilters.start_date);
-      if (statsFilters.end_date) params.set('end_date', statsFilters.end_date);
+      const queryParams = new URLSearchParams();
+      if (statsFilters.video_id) queryParams.append('video_id', statsFilters.video_id);
+      if (statsFilters.user_id) queryParams.append('user_id', statsFilters.user_id);
+      if (statsFilters.start_date) queryParams.append('start_date', statsFilters.start_date);
+      if (statsFilters.end_date) queryParams.append('end_date', statsFilters.end_date);
 
-      const res = await fetch(`/api/watch-ads/stats?${params.toString()}`, { cache: 'no-store' });
-      const json = await res.json();
-      if (!res.ok || json?.success === false) {
-        throw new Error(json?.error || 'Failed to load stats');
+      const response = await fetch(`/api/watch-ads/stats?${queryParams.toString()}`);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to load stats from API');
       }
 
-      const watches = (json?.watches || []) as any[];
-      const totalWatches = json?.summary?.total_watches ?? watches.length;
-      const qualifiedWatches = json?.summary?.qualified_watches ?? watches.filter(w => w.is_qualified).length;
-      const totalCredits = json?.summary?.total_credits_awarded ?? (watches.reduce((sum, w) => sum + (w.credits_awarded || 0), 0) || 0);
-      const uniqueUsers = json?.summary?.unique_viewers ?? new Set(watches.map(w => w.user_id)).size;
-      const uniqueVideos = new Set(watches.map(w => w.video_id)).size;
-
-      setStats({
-        totalWatches,
-        qualifiedWatches,
-        totalCredits,
-        uniqueUsers,
-        uniqueVideos,
-        watches
-      });
+      setStats(result);
     } catch (err: any) {
       console.error('Error loading stats:', err);
       setStatsError(err.message || 'Failed to load stats');

@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
-
-// Create admin client with service role key
-let supabaseAdmin: ReturnType<typeof createClient> | null = null;
-
-if (supabaseUrl && supabaseServiceKey) {
-  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-}
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET - Get stats about which users watched which ads
 export async function GET(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey || !supabaseAdmin) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Missing Supabase environment variables' },
+        { success: false, error: 'Missing Supabase environment variables' },
         { status: 500 }
       );
     }
@@ -92,7 +82,7 @@ export async function GET(request: NextRequest) {
       query = query.lte('created_at', endDate);
     }
 
-    const { data: watches, error, count } = await query as { data: any[] | null, error: any, count: number | null };
+    const { data: watches, error, count } = await query;
 
     if (error) {
       console.error('Error fetching video watch stats:', error);
@@ -157,10 +147,10 @@ export async function GET(request: NextRequest) {
 
     // Fetch user and video data separately
     const userIds = watches && watches.length > 0 
-      ? Array.from(new Set(watches.map(w => w.user_id).filter(Boolean)))
+      ? [...new Set(watches.map(w => w.user_id).filter(Boolean))] 
       : [];
     const videoIds = watches && watches.length > 0
-      ? Array.from(new Set(watches.map(w => w.video_id).filter(Boolean)))
+      ? [...new Set(watches.map(w => w.video_id).filter(Boolean))]
       : [];
 
     // Fetch users - handle gracefully if table doesn't exist or has errors
@@ -171,7 +161,7 @@ export async function GET(request: NextRequest) {
         const { data: users, error: usersError } = await supabaseAdmin
           .from('users')
           .select('id, email, first_name, last_name, full_name, phone, employee_number')
-          .in('id', userIds) as { data: any[] | null, error: any };
+          .in('id', userIds);
         
         if (!usersError && users && users.length > 0) {
           users.forEach(user => {
@@ -205,7 +195,7 @@ export async function GET(request: NextRequest) {
         const { data: videos, error: videosError } = await supabaseAdmin
           .from('watch_ads_videos')
           .select('id, title, advertiser_name, credit_amount')
-          .in('id', videoIds) as { data: any[] | null, error: any };
+          .in('id', videoIds);
         
         if (!videosError && videos && videos.length > 0) {
           videos.forEach(video => {

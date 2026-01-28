@@ -82,7 +82,11 @@ const validatePassword = (password: string): { isValid: boolean; errors: string[
 function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo') || '/dashboard'; // Default to dashboard if no return path
+  let returnTo = searchParams.get('returnTo') || '/admin/dashboard'; // Default to admin dashboard if no return path
+  // Ensure returnTo always points to /admin/dashboard if it's /dashboard
+  if (returnTo === '/dashboard') {
+    returnTo = '/admin/dashboard';
+  }
   const [activeTab, setActiveTab] = useState<'admin' | 'superadmin'>('admin');
   const [email, setEmail] = useState('');
   const [superAdminEmail, setSuperAdminEmail] = useState(''); // Separate email for superadmin
@@ -209,9 +213,9 @@ function AdminLoginContent() {
       
       // If super admin or admin email, redirect immediately (don't wait for profile or other checks)
       if (isSuperAdminEmail || isAdminEmail) {
-        console.log('AdminLogin: Redirecting to', returnTo, '(email check - immediate)');
-        redirectingRef.current = false; // Reset before redirect
-        router.replace(returnTo);
+        const redirectPath = returnTo === '/dashboard' ? '/admin/dashboard' : returnTo;
+        console.log('AdminLogin: Redirecting to', redirectPath, '(email check - immediate, returnTo was:', returnTo, ')');
+        router.replace(redirectPath);
         return;
       }
 
@@ -245,9 +249,9 @@ function AdminLoginContent() {
       if (profile?.role) {
         const role = profile.role.toLowerCase();
         if (['admin', 'super_admin', 'superadmin'].includes(role)) {
-          console.log('AdminLogin: Redirecting to', returnTo, '(profile role check)');
-          redirectingRef.current = false; // Reset before redirect
-          router.replace(returnTo);
+          const redirectPath = returnTo === '/dashboard' ? '/admin/dashboard' : returnTo;
+          console.log('AdminLogin: Redirecting to', redirectPath, '(profile role check, returnTo was:', returnTo, ')');
+          router.replace(redirectPath);
           return;
         }
       }
@@ -341,9 +345,9 @@ function AdminLoginContent() {
           // If active admin/super_admin → dashboard
           const effectiveRole = (existingUser.role || '').toLowerCase();
           if (['admin','super_admin','superadmin'].includes(effectiveRole) && existingUser.status === 'active') {
-            console.log('AdminLogin: Redirecting to', returnTo, '(database check)');
-            redirectingRef.current = false; // Reset before redirect
-            await router.replace(returnTo);
+            const redirectPath = returnTo === '/dashboard' ? '/admin/dashboard' : returnTo;
+            console.log('AdminLogin: Redirecting to', redirectPath, '(database check, returnTo was:', returnTo, ')');
+            await router.replace(redirectPath);
             return;
           }
 
@@ -447,8 +451,9 @@ function AdminLoginContent() {
               setIsLoading(false);
               
               setTimeout(() => {
-                console.log('AdminLogin: Executing immediate redirect to', returnTo);
-                router.replace(returnTo);
+                const redirectPath = returnTo === '/dashboard' ? '/admin/dashboard' : returnTo;
+                console.log('AdminLogin: Executing immediate redirect to', redirectPath, '(returnTo was:', returnTo, ')');
+                router.replace(redirectPath);
               }, 150);
            } else if (profile?.status === 'pending_approval') {
               setSuccess('Account created. Redirecting to onboarding...');
@@ -568,7 +573,9 @@ function AdminLoginContent() {
         setIsLoading(false);
         
         // Redirect immediately using router.push
-        router.push(returnTo);
+        const redirectPath = returnTo === '/dashboard' ? '/admin/dashboard' : returnTo;
+        console.log('AdminLogin: Executing demo login redirect to', redirectPath, '(returnTo was:', returnTo, ')');
+        router.push(redirectPath);
         
         // Safety timeout: if redirect doesn't happen within 2 seconds, ensure loading is off
         setTimeout(() => {
@@ -647,8 +654,9 @@ function AdminLoginContent() {
         
         // Redirect after successful password update
         setTimeout(() => {
-          console.log('AdminLogin: Executing redirect after password update');
-          router.replace(returnTo);
+          const redirectPath = returnTo === '/dashboard' ? '/admin/dashboard' : returnTo;
+          console.log('AdminLogin: Executing redirect after password update to', redirectPath, '(returnTo was:', returnTo, ')');
+          router.replace(redirectPath);
         }, 500);
       } else {
         setError(result.error || 'Failed to update password. Please try again.');
