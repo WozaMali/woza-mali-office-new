@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CollectorDashboard from '../../src/components/collector/CollectorDashboard';
+import CollectorDashboard from '@/components/collector/CollectorDashboard';
 
 export default function CollectorDashboardClient() {
   const [isClient, setIsClient] = useState(false);

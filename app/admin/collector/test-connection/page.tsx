@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { testSupabaseConnection, checkRequiredTables } from '../../../src/lib/collector-services';
+import { testSupabaseConnection, checkRequiredTables } from '@/lib/collector-services';
 
 export default function TestConnectionPage() {
   const [connectionResult, setConnectionResult] = useState<any>(null);
