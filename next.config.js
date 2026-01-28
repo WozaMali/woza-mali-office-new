@@ -6,6 +6,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Turbopack is enabled by default in newer Next.js versions.
+  // We keep a custom webpack config below; adding an explicit turbopack config
+  // prevents Next from erroring about "webpack config and no turbopack config".
+  turbopack: {},
   // Next.js 15 compatibility
   experimental: {
     // Enable better debugging
