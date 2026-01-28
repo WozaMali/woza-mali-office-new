@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import CollectorDashboardClient from './CollectorDashboardClient';
-import { testSupabaseConnection } from '../../src/lib/collector-services';
+import { testSupabaseConnection } from '@/lib/collector-services';
 
 export default function CollectorPage() {
   const [connectionStatus, setConnectionStatus] = useState<string>('Testing connection...');
