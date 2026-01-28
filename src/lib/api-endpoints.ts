@@ -50,12 +50,12 @@ export class ApiEndpoints {
       const result = await unifiedDataService.getUnifiedPickups(filters);
       
       if (result.error) {
-        return this.createResponse(false, '/api/pickups', undefined, result.error);
+        return this.createResponse(false, '/api/admin/pickups', undefined, result.error);
       }
       
-      return this.createResponse(true, '/api/pickups', result.data);
+      return this.createResponse(true, '/api/admin/pickups', result.data);
     } catch (error: any) {
-      return this.createResponse(false, '/api/pickups', undefined, error.message);
+      return this.createResponse(false, '/api/admin/pickups', undefined, error.message);
     }
   }
 
@@ -66,12 +66,12 @@ export class ApiEndpoints {
       const pickup = result.data.find(p => p.id === id);
       
       if (!pickup) {
-        return this.createResponse(false, `/api/pickups/${id}`, undefined, 'Pickup not found');
+        return this.createResponse(false, `/api/admin/pickups/${id}`, undefined, 'Pickup not found');
       }
       
-      return this.createResponse(true, `/api/pickups/${id}`, pickup);
+      return this.createResponse(true, `/api/admin/pickups/${id}`, pickup);
     } catch (error: any) {
-      return this.createResponse(false, `/api/pickups/${id}`, undefined, error.message);
+      return this.createResponse(false, `/api/admin/pickups/${id}`, undefined, error.message);
     }
   }
 
@@ -85,12 +85,12 @@ export class ApiEndpoints {
       const result = await unifiedDataService.getUnifiedCustomers(filters);
       
       if (result.error) {
-        return this.createResponse(false, '/api/customers', undefined, result.error);
+        return this.createResponse(false, '/api/admin/customers', undefined, result.error);
       }
       
-      return this.createResponse(true, '/api/customers', result.data);
+      return this.createResponse(true, '/api/admin/customers', result.data);
     } catch (error: any) {
-      return this.createResponse(false, '/api/customers', undefined, error.message);
+      return this.createResponse(false, '/api/admin/customers', undefined, error.message);
     }
   }
 
@@ -101,12 +101,12 @@ export class ApiEndpoints {
       const customer = result.data.find(c => c.id === id);
       
       if (!customer) {
-        return this.createResponse(false, `/api/customers/${id}`, undefined, 'Customer not found');
+        return this.createResponse(false, `/api/admin/customers/${id}`, undefined, 'Customer not found');
       }
       
-      return this.createResponse(true, `/api/customers/${id}`, customer);
+      return this.createResponse(true, `/api/admin/customers/${id}`, customer);
     } catch (error: any) {
-      return this.createResponse(false, `/api/customers/${id}`, undefined, error.message);
+      return this.createResponse(false, `/api/admin/customers/${id}`, undefined, error.message);
     }
   }
 
@@ -121,12 +121,12 @@ export class ApiEndpoints {
       const result = await unifiedDataService.getUnifiedCollectors(filters);
       
       if (result.error) {
-        return this.createResponse(false, '/api/collectors', undefined, result.error);
+        return this.createResponse(false, '/api/admin/collectors', undefined, result.error);
       }
       
-      return this.createResponse(true, '/api/collectors', result.data);
+      return this.createResponse(true, '/api/admin/collectors', result.data);
     } catch (error: any) {
-      return this.createResponse(false, '/api/collectors', undefined, error.message);
+      return this.createResponse(false, '/api/admin/collectors', undefined, error.message);
     }
   }
 
@@ -137,12 +137,12 @@ export class ApiEndpoints {
       const collector = result.data.find(c => c.id === id);
       
       if (!collector) {
-        return this.createResponse(false, `/api/collectors/${id}`, undefined, 'Collector not found');
+        return this.createResponse(false, `/api/admin/collectors/${id}`, undefined, 'Collector not found');
       }
       
-      return this.createResponse(true, `/api/collectors/${id}`, collector);
+      return this.createResponse(true, `/api/admin/collectors/${id}`, collector);
     } catch (error: any) {
-      return this.createResponse(false, `/api/collectors/${id}`, undefined, error.message);
+      return this.createResponse(false, `/api/admin/collectors/${id}`, undefined, error.message);
     }
   }
 
@@ -152,12 +152,12 @@ export class ApiEndpoints {
       const result = await unifiedDataService.getUnifiedSystemStats();
       
       if (result.error) {
-        return this.createResponse(false, '/api/system/stats', undefined, result.error);
+        return this.createResponse(false, '/api/admin/system/stats', undefined, result.error);
       }
       
-      return this.createResponse(true, '/api/system/stats', result.data);
+      return this.createResponse(true, '/api/admin/system/stats', result.data);
     } catch (error: any) {
-      return this.createResponse(false, '/api/system/stats', undefined, error.message);
+      return this.createResponse(false, '/api/admin/system/stats', undefined, error.message);
     }
   }
 
@@ -187,9 +187,9 @@ export class ApiEndpoints {
         timestamp: new Date().toISOString()
       };
 
-      return this.createResponse(true, '/api/dashboard', dashboardData);
+      return this.createResponse(true, '/api/admin/dashboard', dashboardData);
     } catch (error: any) {
-      return this.createResponse(false, '/api/dashboard', undefined, error.message);
+      return this.createResponse(false, '/api/admin/dashboard', undefined, error.message);
     }
   }
 
@@ -230,9 +230,9 @@ export class ApiEndpoints {
         }
       }
 
-      return this.createResponse(true, `/api/search?q=${query}&type=${type}`, results);
+      return this.createResponse(true, `/api/admin/search?q=${query}&type=${type}`, results);
     } catch (error: any) {
-      return this.createResponse(false, `/api/search?q=${query}&type=${type}`, undefined, error.message);
+      return this.createResponse(false, `/api/admin/search?q=${query}&type=${type}`, undefined, error.message);
     }
   }
 
@@ -271,9 +271,9 @@ export class ApiEndpoints {
         generatedAt: new Date().toISOString()
       };
 
-      return this.createResponse(true, `/api/analytics?range=${timeRange}`, analyticsData);
+      return this.createResponse(true, `/api/admin/analytics?range=${timeRange}`, analyticsData);
     } catch (error: any) {
-      return this.createResponse(false, `/api/analytics?range=${timeRange}`, undefined, error.message);
+      return this.createResponse(false, `/api/admin/analytics?range=${timeRange}`, undefined, error.message);
     }
   }
 
@@ -290,9 +290,9 @@ export class ApiEndpoints {
         uptime: process.uptime ? Math.floor(process.uptime()) : 0
       };
 
-      return this.createResponse(true, '/api/health', healthData);
+      return this.createResponse(true, '/api/admin/health', healthData);
     } catch (error: any) {
-      return this.createResponse(false, '/api/health', undefined, error.message);
+      return this.createResponse(false, '/api/admin/health', undefined, error.message);
     }
   }
 }

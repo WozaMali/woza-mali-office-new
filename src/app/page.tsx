@@ -36,7 +36,7 @@ export default function HomePage() {
       // Redirect to main app for login
       const mainUrl = config.getMainUrl();
       console.log('HomePage: Using main URL:', mainUrl);
-      window.location.href = `${mainUrl}/admin-login`;
+      window.location.href = `${mainUrl}/login`;
     } else if (isAdminUser(user, profile)) {
       // Redirect to admin dashboard
       window.location.href = '/admin';

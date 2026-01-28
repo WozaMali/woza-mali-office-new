@@ -189,7 +189,7 @@ export class LogoutUtils {
     
     // Add cache busting parameter
     const timestamp = Date.now();
-    window.location.href = `/?logout=${timestamp}&nocache=true`;
+    window.location.href = `/admin-login?logout=${timestamp}&nocache=true`;
   }
   
   /**

@@ -32,7 +32,7 @@ export default function LockScreen() {
     if (typeof window !== 'undefined' && user) {
       const handler = (e: PopStateEvent) => {
         e.preventDefault();
-        router.replace('/lock');
+        router.replace('/admin/lock');
       };
       window.addEventListener('popstate', handler);
       return () => window.removeEventListener('popstate', handler);
@@ -248,7 +248,7 @@ export default function LockScreen() {
                       setPin('');
                       // Use a small delay to ensure state updates propagate
                       await new Promise(resolve => setTimeout(resolve, 200));
-                      router.replace('/admin');
+                      router.replace('/admin/dashboard');
                     }
                   }
                 }

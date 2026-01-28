@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     }
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !serviceKey) {
       return NextResponse.json({ error: 'Service key not configured' }, { status: 500 });
     }

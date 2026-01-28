@@ -28,8 +28,8 @@ interface ExportRequest {
   created_at: string;
   updated_at: string;
   approved_at?: string;
-  expires_at?: string;
   rejection_reason?: string;
+  expires_at?: string;
   requested_by_user?: {
     full_name?: string;
     email?: string;

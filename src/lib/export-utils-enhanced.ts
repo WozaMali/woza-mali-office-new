@@ -1,6 +1,4 @@
-
-// Stub for enhanced PDF export
-export async function exportToEnhancedPDF(options: any): Promise<void> {
-  console.warn('Enhanced PDF export is disabled (stub)', options);
-  alert('Enhanced PDF export is currently disabled.');
+export async function exportToEnhancedPDF(title: string, filename: string, columns: any[], rows: any[], options?: any) {
+  console.warn('exportToEnhancedPDF is a stub.');
+  return Promise.resolve();
 }

@@ -3,11 +3,11 @@ require('dotenv').config();
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mljtjntkddwkcjixkyuy.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseServiceKey) {
-  console.error('❌ SUPABASE_SERVICE_ROLE_KEY not found in environment variables');
-  console.log('Please set SUPABASE_SERVICE_ROLE_KEY in your .env file');
+  console.error('❌ NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY not found in environment variables');
+  console.log('Please set NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY in your .env file');
   process.exit(1);
 }
 

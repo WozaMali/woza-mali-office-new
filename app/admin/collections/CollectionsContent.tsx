@@ -11,22 +11,22 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { UnifiedAdminService } from '../../../src/lib/unified-admin-service';
-import type { CollectionData } from '../../../src/lib/unified-admin-service';
-import { useAuth } from '../../../src/hooks/use-auth';
-import { supabase } from '../../../src/lib/supabase';
-import { useBackgroundRefresh } from '../../../src/hooks/useBackgroundRefresh';
-import { useRealtimeConnection } from '../../../src/hooks/useRealtimeConnection';
-import { backgroundRefreshService } from '../../../src/lib/backgroundRefreshService';
+import { UnifiedAdminService } from '@/lib/unified-admin-service';
+import type { CollectionData } from '@/lib/unified-admin-service';
+import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/lib/supabase';
+import { useBackgroundRefresh } from '@/hooks/useBackgroundRefresh';
+import { useRealtimeConnection } from '@/hooks/useRealtimeConnection';
+import { backgroundRefreshService } from '@/lib/backgroundRefreshService';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, CheckCircle, XCircle, Clock, Search, Filter, Package, Users, Calendar, TrendingUp, Activity, Check, X, Copy, Settings, FileDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { softDeleteCollection } from '../../../src/lib/soft-delete-service';
-import { clearPickupsCache } from '../../../src/lib/admin-services';
+import { softDeleteCollection } from '@/lib/soft-delete-service';
+import { clearPickupsCache } from '@/lib/admin-services';
 import { ResetTransactionsDialog } from '@/components/ResetTransactionsDialog';
-import { exportToGenericPDF } from '../../../src/lib/export-utils-generic';
+import { performExportToGenericPDF } from '@/lib/export-utils-generic';
 
 export default function CollectionsContent() {
   // Collections page - uses same pattern as withdrawals page
@@ -316,10 +316,10 @@ export default function CollectionsContent() {
       const pendingCollections = rows.filter(c => c.status === 'pending' || c.status === 'submitted').length;
       const approvedCollections = rows.filter(c => c.status === 'approved').length;
       const rejectedCollections = rows.filter(c => c.status === 'rejected').length;
-      const totalWeight = rows.reduce((sum, c) => sum + (c.total_weight_kg || 0), 0);
-      const totalValue = rows.reduce((sum, c) => sum + (c.total_value || 0), 0);
+      const totalWeight = rows.reduce((sum, c) => sum + (c.weight_kg || 0), 0);
+      const totalValue = rows.reduce((sum, c) => sum + (c.computed_value || 0), 0);
       const avgValue = totalCollections > 0 ? totalValue / totalCollections : 0;
-      const uniqueCustomers = new Set(rows.map(c => c.customer_id).filter(Boolean)).size;
+      const uniqueCustomers = new Set(rows.map(c => c.user_id).filter(Boolean)).size;
       const uniqueCollectors = new Set(rows.map(c => c.collector_id).filter(Boolean)).size;
 
       // Prepare data rows
@@ -327,8 +327,8 @@ export default function CollectionsContent() {
         'Collection ID': row.id.substring(0, 8) + '...',
         'Resident': resolvePersonName(row.customer, 'Unknown'),
         'Collector': resolvePersonName(row.collector, 'Unassigned'),
-        'Weight (kg)': (row.total_weight_kg || 0).toFixed(2),
-        'Value (C)': (row.total_value || 0).toFixed(2),
+        'Weight (kg)': (row.weight_kg || 0).toFixed(2),
+        'Value (C)': (row.computed_value || 0).toFixed(2),
         'Status': row.status,
         'Created': new Date(row.created_at).toLocaleDateString(),
       }));
@@ -340,7 +340,7 @@ export default function CollectionsContent() {
           acc[customerName] = { collections: 0, totalValue: 0 };
         }
         acc[customerName].collections++;
-        acc[customerName].totalValue += row.total_value || 0;
+        acc[customerName].totalValue += row.computed_value || 0;
         return acc;
       }, {} as Record<string, { collections: number; totalValue: number }>);
 
@@ -349,7 +349,7 @@ export default function CollectionsContent() {
         .sort((a, b) => b.value - a.value)
         .slice(0, 3);
 
-      await exportToGenericPDF({
+      await performExportToGenericPDF({
         title: 'Collections Report',
         filename: `collections-report-${new Date().toISOString().split('T')[0]}.pdf`,
         columns: ['Collection ID', 'Resident', 'Collector', 'Weight (kg)', 'Value (C)', 'Status', 'Created'],
@@ -839,11 +839,11 @@ export default function CollectionsContent() {
                   </div>
                   <div>
                     <div className="text-gray-800">Total Weight (kg)</div>
-                    <div className="font-medium">{details.base?.total_weight_kg ?? details.base?.weight_kg ?? 0}</div>
+                    <div className="font-medium">{details.base?.weight_kg ?? 0}</div>
                   </div>
                   <div>
                     <div className="text-gray-800">Total Credits (C)</div>
-                    <div className="font-medium">{Number(details.base?.total_value ?? details.base?.computed_value ?? 0).toFixed(2)}</div>
+                    <div className="font-medium">{Number(details.base?.computed_value ?? 0).toFixed(2)}</div>
                   </div>
                 </div>
 

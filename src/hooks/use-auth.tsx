@@ -27,8 +27,8 @@ export interface AuthContextType {
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ success: boolean; error?: string }>;
-  refreshProfile: () => Promise<void>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+  refreshProfile: () => Promise<void>;
   bypassLogin: () => Promise<void>;
 }
 
@@ -444,26 +444,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Update password function
-  const updatePassword = async (password: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) {
-        return { success: false, error: error.message };
-      }
-      return { success: true };
-    } catch (err) {
-      console.error('Password update error:', err);
-      return { success: false, error: 'An unexpected error occurred' };
-    }
-  };
-
-  // Bypass login function (Stub)
-  const bypassLogin = async () => {
-    console.warn('Login bypass is not supported in this environment.');
-    // You might want to implement a dev-only bypass here if needed
-  };
-
   // Effect to handle auth state changes
   useEffect(() => {
     console.log('🔐 useAuth: Starting auth state check');
@@ -586,6 +566,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const updatePassword = async (password: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  };
+
+
   const value: AuthContextType = {
     user,
     profile,
@@ -596,12 +587,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetPassword,
     logout,
     updateProfile,
-    refreshProfile,
     updatePassword,
-    bypassLogin,
+    refreshProfile,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 // Custom hook to use auth context

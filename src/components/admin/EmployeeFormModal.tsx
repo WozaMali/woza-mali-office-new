@@ -224,7 +224,7 @@ export default function EmployeeFormModal({ isOpen, onClose, onSuccess, isFirstL
       }
       if (formData.phone !== undefined) updateData.phone = formData.phone;
       if (formData.dateOfBirth !== undefined) updateData.date_of_birth = formData.dateOfBirth;
-      if (formData.addressLine1 !== undefined) updateData.street_addr = formData.addressLine1;
+      if (formData.streetAddr !== undefined) updateData.street_addr = formData.streetAddr;
       if (formData.city !== undefined) updateData.city = formData.city;
       if (formData.postalCode !== undefined) updateData.postal_code = formData.postalCode;
       if (formData.township !== undefined) updateData.township_id = formData.township;

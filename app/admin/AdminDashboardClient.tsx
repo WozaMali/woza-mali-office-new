@@ -72,7 +72,7 @@ import RewardsPage from '@/components/admin/RewardsPage';
 import ResidentSummaryPage from '@/components/admin/ResidentSummaryPage';
 import AdminGreenScholarFund from '@/components/admin/AdminGreenScholarFund';
 import AddUserModal from './AddUserModalSimple';
-import BeneficiariesPage from './Beneficiaries';
+import BeneficiariesPage from './beneficiaries/page';
 import { NotificationToast } from '@/components/NotificationToast';
 import { useNotifications } from '@/hooks/useNotifications';
 import { notificationManager } from '@/lib/notificationManager';
@@ -81,8 +81,8 @@ import { ResetTransactionsDialog } from '@/components/ResetTransactionsDialog';
 import RealtimeStatusDot from '@/components/RealtimeStatusDot';
 import TransactionsPage from '@/components/TransactionsPage';
 import dynamic from 'next/dynamic';
-const AdminSettingsPage = dynamic(() => import('../../src/app/admin/settings/page'), { ssr: false });
-const TeamMembersPage = dynamic(() => import('../../src/app/admin/team-members/page'), { ssr: false });
+const AdminSettingsPage = dynamic(() => import('./settings/page'), { ssr: false });
+const TeamMembersPage = dynamic(() => import('./team-members/page'), { ssr: false });
 import { RoleBasedAccess } from '../../src/lib/role-based-access';
 import {
   getPickups, 
@@ -1007,7 +1007,7 @@ function DashboardContent({ onPageChange, onAddUser, isSuperAdmin, softOpen, set
                       sessionStorage.removeItem('pwaLock.unlockedSession');
                     } catch {}
                     // Force immediate refresh to trigger unlock card
-                    router.push('/lock');
+                    router.push('/admin/lock');
                   } catch {}
                 }}
               >
@@ -3692,7 +3692,7 @@ export default function AdminDashboardClient() {
     // Check current pathname to avoid redirect loop
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
     // Don't redirect if we're already on the lock page (prevents redirect loop)
-    if (currentPath === '/lock') {
+    if (currentPath === '/admin/lock') {
       return;
     }
     
@@ -3700,7 +3700,7 @@ export default function AdminDashboardClient() {
     // Don't redirect on initial login - only redirect if explicitly locked
     // needsSetup should not force redirect on first load - let user access dashboard first
     if (isLocked) {
-      router.replace('/lock');
+      router.replace('/admin/lock');
     }
     // Note: needsSetup is handled separately - user can set up PIN later via settings
   }, [user, isClient, isLocked, router]);
@@ -3880,7 +3880,7 @@ export default function AdminDashboardClient() {
       />
 
 
-      {/* PWA Lock System - Setup only (unlock handled on /lock) */}
+      {/* PWA Lock System - Setup only (unlock handled on /admin/lock) */}
       {(!isLocked && needsSetup) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
@@ -3899,7 +3899,7 @@ export default function AdminDashboardClient() {
               const pin = formData.get('pin') as string;
               const result = await setup(username, pin);
               if (result.success) {
-                // After setup, keep session locked; user will be redirected to /lock by layout
+                // After setup, keep session locked; user will be redirected to /admin/lock by layout
                 lockImmediate();
                 e.currentTarget.reset();
               } else {

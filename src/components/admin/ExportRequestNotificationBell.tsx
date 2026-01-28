@@ -28,11 +28,6 @@ interface ExportRequest {
   approved_by?: string;
   approved_at?: string;
   rejection_reason?: string;
-  request_data?: {
-    columns: any[];
-    rows: any[];
-    [key: string]: any;
-  };
   requested_by_user?: {
     full_name?: string;
     email?: string;

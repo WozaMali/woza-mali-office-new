@@ -113,7 +113,7 @@ export default function AdminLayout({ children, currentPage }: AdminLayoutProps)
     // Only redirect to lock screen if user is logged in AND session is actually locked
     // Don't redirect on needsSetup - let user access dashboard first, they can set up PIN later
     if (user && isLocked) {
-      router.replace('/lock');
+      router.replace('/admin/lock');
     } else if (!user && isLocked) {
       // If not logged in but lock state exists, clear it and go to login
       router.replace('/admin-login');
@@ -148,7 +148,7 @@ export default function AdminLayout({ children, currentPage }: AdminLayoutProps)
       // Force lock immediately and navigate to dedicated lock screen
       lockImmediate();
       try { localStorage.setItem('pwaLock.forceLockNext', '1'); } catch {}
-      router.push('/lock');
+      router.push('/admin/lock');
     } catch (e) {
       console.error('Soft sign-out failed', e);
     }

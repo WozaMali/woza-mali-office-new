@@ -1,11 +1,14 @@
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
 
 // Get collector ID by email (for real collector data)
 export async function getCollectorIdByEmail(email: string): Promise<string | null> {
   try {
     console.log('🔍 Looking up collector ID for email:', email);
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized. Ensure NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY is set.');
+    }
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('email', email)
@@ -35,6 +38,9 @@ export async function getCollectorIdByEmail(email: string): Promise<string | nul
 export async function testSupabaseConnection() {
   try {
     console.log('🔌 Testing Supabase connection...');
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized. Ensure NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY is set.');
+    }
     console.log('🔌 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL || 'Not set');
     console.log('🔌 Supabase Key length:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length || 0);
     
@@ -42,7 +48,7 @@ export async function testSupabaseConnection() {
     console.log('🔌 Testing basic database connectivity...');
     
     // Test with a simple query that should work
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('role_id', 'collector')

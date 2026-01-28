@@ -1,12 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost'],
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
   },
   // Next.js 15 compatibility
+  turbopack: {},
   experimental: {
     // Enable better debugging
   },
@@ -59,11 +62,6 @@ const nextConfig = {
       };
     }
     return config;
-  },
-  // Configure Turbopack to silence the conflict warning
-  turbopack: {
-    // We can add specific Turbopack configuration here if needed
-    // For now, an empty object tells Next.js we are aware of the migration
   },
   // Suppress the workspace warning
   outputFileTracingRoot: process.cwd(),

@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     }
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const service = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !service) {
       return NextResponse.json({ success: false, error: 'Service role missing' }, { status: 500 });
     }

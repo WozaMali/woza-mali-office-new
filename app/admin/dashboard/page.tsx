@@ -564,7 +564,7 @@ export default function DashboardPage() {
             <Button 
                 className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
               size="lg"
-              onClick={() => router.push('/pickups')}
+              onClick={() => router.push('/admin/pickups')}
             >
                 <Package className="mr-3 h-5 w-5" />
               Manage Pickups
@@ -572,7 +572,7 @@ export default function DashboardPage() {
             <Button 
                 className="w-full justify-start bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
               size="lg"
-              onClick={() => router.push('/rewards')}
+              onClick={() => router.push('/admin/rewards')}
             >
                 <BarChart3 className="mr-3 h-5 w-5" />
               Configure Rewards
@@ -580,7 +580,7 @@ export default function DashboardPage() {
             <Button 
                 className="w-full justify-start bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
               size="lg"
-              onClick={() => router.push('/analytics')}
+              onClick={() => router.push('/admin/analytics')}
             >
                 <TrendingUp className="mr-3 h-5 w-5" />
               View Reports
@@ -588,7 +588,7 @@ export default function DashboardPage() {
             <Button 
                 className="w-full justify-start bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
               size="lg"
-              onClick={() => router.push('/users')}
+              onClick={() => router.push('/admin/users')}
             >
                 <Users className="mr-3 h-5 w-5" />
               Manage Users
@@ -596,7 +596,7 @@ export default function DashboardPage() {
             <Button 
                 className="w-full justify-start bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
               size="lg"
-              onClick={() => router.push('/withdrawals')}
+              onClick={() => router.push('/admin/withdrawals')}
             >
                 <CreditCard className="mr-3 h-5 w-5" />
               Process Payments
@@ -620,7 +620,7 @@ export default function DashboardPage() {
                 <Button 
                   className="w-full justify-start bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
                   size="lg"
-                  onClick={() => router.push('/config')}
+                  onClick={() => router.push('/admin/config')}
                 >
                   <Settings className="mr-3 h-5 w-5" />
                   System Configuration
@@ -628,7 +628,7 @@ export default function DashboardPage() {
                 <Button 
                   className="w-full justify-start bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
                   size="lg"
-                  onClick={() => router.push('/transactions')}
+                  onClick={() => router.push('/admin/transactions')}
                 >
                   <Wallet className="mr-3 h-5 w-5" />
                   Transaction Management
@@ -636,7 +636,7 @@ export default function DashboardPage() {
                 <Button 
                   className="w-full justify-start bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
                   size="lg"
-                  onClick={() => router.push('/analytics')}
+                  onClick={() => router.push('/admin/analytics')}
                 >
                   <TrendingUp className="mr-3 h-5 w-5" />
                   Advanced Analytics

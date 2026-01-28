@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const { userId, role, status } = await req.json()
     if (!userId) return NextResponse.json({ success: false, error: 'userId required' }, { status: 400 })
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const serviceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
     if (!supabaseUrl || !serviceKey) {
       return NextResponse.json({ success: false, error: 'Service role not configured' }, { status: 500 })
     }

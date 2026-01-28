@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 // Create Supabase client with service role key for admin operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
   {
     auth: {
       autoRefreshToken: false,
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           last_sign_in_at: user.last_sign_in_at,
           user_metadata: user.user_metadata,
           app_metadata: user.app_metadata,
-          has_password: !!(user as any).encrypted_password
+          has_password: 'encrypted_password' in user ? !!(user as any).encrypted_password : false
         },
         public_user: publicUser ? {
           id: publicUser.id,

@@ -4,13 +4,13 @@ import { createClient } from '@supabase/supabase-js'
 // Service role client (server-only)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
 export async function POST(_req: NextRequest) {
   try {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ success: false, error: 'Service role key missing' }, { status: 500 })
     }
 

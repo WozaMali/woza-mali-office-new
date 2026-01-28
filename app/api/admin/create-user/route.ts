@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 // Create Supabase client with service role key for admin operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
   {
     auth: {
       autoRefreshToken: false,
@@ -16,7 +16,7 @@ const supabaseAdmin = createClient(
 export async function POST(request: NextRequest) {
   try {
     // Debug: Check if service role key is available
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
       console.error('SUPABASE_SERVICE_ROLE_KEY is not set');
       return NextResponse.json(
         { success: false, error: 'Server configuration error: Service role key not found' },
