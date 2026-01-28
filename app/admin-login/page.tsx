@@ -113,7 +113,7 @@ function AdminLoginContent() {
   const redirectingRef = useRef(false);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const getAuthHeader = async () => {
+  const getAuthHeader = async (): Promise<Record<string, string>> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -265,7 +265,7 @@ function AdminLoginContent() {
 
           try {
              const authHeader = await getAuthHeader();
-             const res = await fetch('/api/auth/me', { headers: { ...authHeader } });
+             const res = await fetch('/api/auth/me', { headers: authHeader });
              if (res.ok) {
                  const data = await res.json();
                  if (data.profile) {
