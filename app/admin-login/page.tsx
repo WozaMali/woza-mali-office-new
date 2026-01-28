@@ -82,7 +82,7 @@ const validatePassword = (password: string): { isValid: boolean; errors: string[
 function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo') || '/admin/dashboard'; // Default to admin dashboard if no return path
+  const returnTo = searchParams.get('returnTo') || '/dashboard'; // Default to dashboard if no return path
   const [activeTab, setActiveTab] = useState<'admin' | 'superadmin'>('admin');
   const [email, setEmail] = useState('');
   const [superAdminEmail, setSuperAdminEmail] = useState(''); // Separate email for superadmin
@@ -104,10 +104,20 @@ function AdminLoginContent() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordUpdateErrors, setPasswordUpdateErrors] = useState<string[]>([]);
   
-  const { login, resetPassword, updatePassword, isLoading: authLoading, user, profile, logout, bypassLogin } = useAuth();
+  const { login, resetPassword, updatePassword, isLoading: authLoading, user, profile, logout } = useAuth();
   const redirectAttemptedRef = useRef(false);
   const redirectingRef = useRef(false);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const getAuthHeader = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    } catch {
+      return {};
+    }
+  };
   
   // Initialize component - prevent flickering by waiting for auth check to complete
   useEffect(() => {
@@ -204,12 +214,6 @@ function AdminLoginContent() {
         router.replace(returnTo);
         return;
       }
-      
-      // Also check if the user just logged in (via successful login attempt)
-      // and we can trust the session completely
-      if (user && !redirectingRef.current) {
-         // Perform a robust check against the database one last time if we aren't sure
-      }
 
       // Quick check for password change requirement (non-blocking) - only for non-admin emails
       try {
@@ -256,7 +260,8 @@ function AdminLoginContent() {
           let fetchError = null;
 
           try {
-             const res = await fetch('/api/auth/me');
+             const authHeader = await getAuthHeader();
+             const res = await fetch('/api/auth/me', { headers: { ...authHeader } });
              if (res.ok) {
                  const data = await res.json();
                  if (data.profile) {
@@ -280,9 +285,10 @@ function AdminLoginContent() {
           if (fetchError || !existingUser) {
             // First-time Office OAuth: create a pending admin application
             // Use API to create user to avoid RLS recursion issues on INSERT
+             const authHeader = await getAuthHeader();
              const regRes = await fetch('/api/auth/register-admin', {
                  method: 'POST',
-                 headers: { 'Content-Type': 'application/json' },
+                 headers: { 'Content-Type': 'application/json', ...authHeader },
                  body: JSON.stringify({
                     id: user.id,
                     email: user.email,
@@ -389,54 +395,53 @@ function AdminLoginContent() {
       console.log('AdminLogin: Login result:', result);
       
       if (result.success) {
-        console.log('AdminLogin: Auth login successful. Checking role...');
-        
-        // Optimistic redirect - if login succeeded, we can try to redirect
-        // The dashboard page will handle the role check/protection
-        // This avoids getting stuck if the profile fetch or API check hangs
-        
-        // However, we try to fetch the role first for better UX (error message if not admin)
-        // But we won't wait forever
-        
-        let profile = null;
-        let isAdmin = false;
-        
+        // Check role via API to ensure we have the latest data and bypass RLS recursion
         try {
-           // Create a timeout for the API check
-           const controller = new AbortController();
-           const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+           const authHeader = await getAuthHeader();
+           const res = await fetch('/api/auth/me', { headers: { ...authHeader } });
+           let profile = null;
            
-           try {
-             const res = await fetch('/api/auth/me', { signal: controller.signal });
-             clearTimeout(timeoutId);
-             
-             if (res.ok) {
-                 const data = await res.json();
-                 profile = data.profile;
-             }
-           } catch (e) {
-             console.warn('AdminLogin: API check timed out or failed, proceeding with optimistic check', e);
-           }
-           
-           // If we have a profile, check role
-           if (profile) {
-              const role = (profile.role || '').toLowerCase();
-              isAdmin = role === 'admin' || role === 'superadmin' || role === 'super_admin';
-           } else {
-              // If no profile yet, check email for obvious admins
-              if (email.includes('admin@wozamali') || email === 'superadmin@wozamali.co.za') {
-                isAdmin = true;
-              } else {
-                // For other users, assume they might be admin if they are logging in here
-                // We'll let the dashboard reject them if not
-                isAdmin = true; 
-                console.log('AdminLogin: Cannot verify role immediately, optimistically allowing redirect');
-              }
+           if (res.ok) {
+               const data = await res.json();
+               profile = data.profile;
            }
 
+           // If profile doesn't exist, try to create it (Auto-onboarding for email logins too)
+           if (!profile) {
+               // We need the user ID. We can get it from the session (which /api/auth/me uses) 
+               // but we need it here. The login result might not have it?
+               // Actually login() usually updates the auth state, but we can't access it synchronously.
+               // Let's fetch the session first to get the ID.
+               const { data: { session } } = await supabase.auth.getSession();
+               
+               if (session) {
+                   const authHeader = await getAuthHeader();
+                   const regRes = await fetch('/api/auth/register-admin', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json', ...authHeader },
+                         body: JSON.stringify({
+                            id: session.user.id,
+                            email: session.user.email,
+                            first_name: '', // We don't have these for email login
+                            last_name: '',
+                            full_name: '',
+                            role: 'admin',
+                            status: 'pending_approval'
+                         })
+                   });
+                   if (regRes.ok) {
+                       const regData = await regRes.json();
+                       profile = regData.user;
+                   }
+               }
+           }
+
+           const role = (profile?.role || '').toLowerCase();
+           const isAdmin = role === 'admin' || role === 'superadmin' || role === 'super_admin';
+           
            if (isAdmin) {
-              const roleText = profile?.role === 'superadmin' || profile?.role === 'super_admin' ? 'Super Admin' : 'Admin';
-              setSuccess(`${roleText || 'Admin'} login successful! Redirecting...`);
+              const roleText = role === 'superadmin' || role === 'super_admin' ? 'Super Admin' : 'Admin';
+              setSuccess(`${roleText} login successful! Redirecting...`);
               console.log('AdminLogin: Admin login successful, redirecting immediately...');
               
               setIsLoading(false);
@@ -451,20 +456,16 @@ function AdminLoginContent() {
                   router.replace('/admin-onboarding');
               }, 150);
            } else {
-              // If explicitly not admin
               setError('Access denied. This account does not have administrator privileges.');
-              console.error('AdminLogin: User does not have admin role', profile?.role);
+              console.error('AdminLogin: User does not have admin role', role);
               setIsLoading(false);
            }
         } catch (err) {
              console.error('AdminLogin: Role check failed', err);
-             // Fallback: Redirect anyway if login succeeded
-             console.log('AdminLogin: Fallback redirect due to error');
-             setSuccess('Login successful. Redirecting...');
+             // Fallback to email check if API fails?
+             // No, unsafe. Just error.
+             setError('Login successful but failed to verify role. Please try again.');
              setIsLoading(false);
-             setTimeout(() => {
-                router.replace(returnTo);
-             }, 150);
         }
       } else {
         console.error('AdminLogin: Login failed:', result.error);
@@ -532,8 +533,8 @@ function AdminLoginContent() {
         // Redirect immediately - don't wait for useEffect or profile
         // The user state is already updated by the login function
         setTimeout(() => {
-          console.log('AdminLogin: Executing immediate redirect to', returnTo);
-          router.replace(returnTo);
+          console.log('AdminLogin: Executing immediate redirect to /admin');
+          router.replace('/admin');
         }, 150);
       } else {
         console.error('AdminLogin: Super admin login failed:', result.error);
@@ -896,17 +897,6 @@ function AdminLoginContent() {
                     <Mail className="mr-2 h-4 w-4" />
                     Continue with Google
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                        bypassLogin();
-                        router.push('/admin');
-                    }}
-                    className="w-full mt-2 border-dashed border-gray-400 text-gray-500 hover:text-gray-700"
-                  >
-                    🚧 Bypass Login (Dev)
-                  </Button>
                 </div>
               </form>
             ) : (
@@ -1027,17 +1017,6 @@ function AdminLoginContent() {
                         Sign In as Super Admin
                       </>
                     )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                        bypassLogin();
-                        router.push('/admin');
-                    }}
-                    className="w-full mt-2 border-dashed border-gray-400 text-gray-500 hover:text-gray-700"
-                  >
-                    🚧 Bypass Login (Dev)
                   </Button>
                 </div>
               </form>

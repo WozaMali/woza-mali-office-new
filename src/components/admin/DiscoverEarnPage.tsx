@@ -274,21 +274,14 @@ export default function DiscoverEarnPage() {
   const loadEvents = useCallback(async () => {
     try {
       setEventsLoading(true);
-      // In Vite, API routes don't exist - query directly via Supabase
-      const client = supabaseAdmin || supabase;
-      
-      const { data, error } = await client
-        .from('community_events')
-        .select('*')
-        .order('event_date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
+      // Use admin API route to avoid RLS/permission issues in the browser.
+      const res = await fetch('/api/admin/community-events', { cache: 'no-store' });
+      const json = await res.json();
+      // Note: this route returns 200 even when Supabase errors; error will be in the payload.
+      if (json?.error) {
+        throw new Error(json.error);
       }
-      
-      const events = (data || []) as CommunityEvent[];
+      const events = (json?.events || []) as CommunityEvent[];
       events.sort((a, b) => {
         if (a.status !== b.status) {
             if (a.status === 'upcoming') return -1;
@@ -342,51 +335,33 @@ export default function DiscoverEarnPage() {
       setStatsLoading(true);
       setStatsError('');
 
-      // In Vite, API routes don't exist - query directly via Supabase
-      const client = supabaseAdmin || supabase;
-      
-      // Build query for video_watches
-      let query = client
-        .from('video_watches')
-        .select(`
-          *,
-          video:watch_ads_videos(*),
-          user:users(id, email, full_name)
-        `);
-      
-      if (statsFilters.video_id) {
-        query = query.eq('video_id', statsFilters.video_id);
+      // Use server API which already does manual "joins" (no FK required) and uses service role.
+      const params = new URLSearchParams();
+      if (statsFilters.video_id) params.set('video_id', statsFilters.video_id);
+      if (statsFilters.user_id) params.set('user_id', statsFilters.user_id);
+      if (statsFilters.start_date) params.set('start_date', statsFilters.start_date);
+      if (statsFilters.end_date) params.set('end_date', statsFilters.end_date);
+
+      const res = await fetch(`/api/watch-ads/stats?${params.toString()}`, { cache: 'no-store' });
+      const json = await res.json();
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.error || 'Failed to load stats');
       }
-      if (statsFilters.user_id) {
-        query = query.eq('user_id', statsFilters.user_id);
-      }
-      if (statsFilters.start_date) {
-        query = query.gte('created_at', statsFilters.start_date);
-      }
-      if (statsFilters.end_date) {
-        query = query.lte('created_at', statsFilters.end_date);
-      }
-      
-      const { data: watches, error } = await query.order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Calculate stats from watches data
-      const totalWatches = watches?.length || 0;
-      const qualifiedWatches = watches?.filter(w => w.is_qualified).length || 0;
-      const totalCredits = watches?.reduce((sum, w) => sum + (w.credits_awarded || 0), 0) || 0;
-      const uniqueUsers = new Set(watches?.map(w => w.user_id)).size;
-      const uniqueVideos = new Set(watches?.map(w => w.video_id)).size;
-      
+
+      const watches = (json?.watches || []) as any[];
+      const totalWatches = json?.summary?.total_watches ?? watches.length;
+      const qualifiedWatches = json?.summary?.qualified_watches ?? watches.filter(w => w.is_qualified).length;
+      const totalCredits = json?.summary?.total_credits_awarded ?? (watches.reduce((sum, w) => sum + (w.credits_awarded || 0), 0) || 0);
+      const uniqueUsers = json?.summary?.unique_viewers ?? new Set(watches.map(w => w.user_id)).size;
+      const uniqueVideos = new Set(watches.map(w => w.video_id)).size;
+
       setStats({
         totalWatches,
         qualifiedWatches,
         totalCredits,
         uniqueUsers,
         uniqueVideos,
-        watches: watches || []
+        watches
       });
     } catch (err: any) {
       console.error('Error loading stats:', err);
@@ -881,64 +856,64 @@ export default function DiscoverEarnPage() {
     [
       {
         table: 'discover_earn_cards',
-        onUpdate: (payload: any) => {
+        onUpdate: (payload) => {
           console.log('📡 Discover & Earn Card updated:', payload);
           setCards(prev => prev.map(card => 
             card.id === payload.new?.id ? { ...card, ...payload.new } : card
           ));
         },
-        onInsert: (payload: any) => {
+        onInsert: (payload) => {
           console.log('📡 New Discover & Earn Card:', payload);
           setCards(prev => [payload.new, ...prev].sort((a, b) => a.display_order - b.display_order));
         },
-        onDelete: (payload: any) => {
+        onDelete: (payload) => {
           console.log('📡 Discover & Earn Card deleted:', payload);
           setCards(prev => prev.filter(c => c.id !== payload.old?.id));
         }
       },
       {
         table: 'hero_slides',
-        onUpdate: (payload: any) => {
+        onUpdate: (payload) => {
           console.log('📡 Hero Slide updated:', payload);
           setSlides(prev => prev.map(slide => 
             slide.id === payload.new?.id ? { ...slide, ...payload.new } : slide
           ));
         },
-        onInsert: (payload: any) => {
+        onInsert: (payload) => {
           console.log('📡 New Hero Slide:', payload);
           setSlides(prev => [payload.new, ...prev].sort((a, b) => a.display_order - b.display_order));
         },
-        onDelete: (payload: any) => {
+        onDelete: (payload) => {
           console.log('📡 Hero Slide deleted:', payload);
           setSlides(prev => prev.filter(s => s.id !== payload.old?.id));
         }
       },
       {
         table: 'watch_ads_videos',
-        onUpdate: (payload: any) => {
+        onUpdate: (payload) => {
           console.log('📡 Watch Ads Video updated:', payload);
           setVideos(prev => prev.map(video => 
             video.id === payload.new?.id ? { ...video, ...payload.new } : video
           ));
         },
-        onInsert: (payload: any) => {
+        onInsert: (payload) => {
           console.log('📡 New Watch Ads Video:', payload);
           setVideos(prev => [payload.new, ...prev].sort((a, b) => a.display_order - b.display_order));
         },
-        onDelete: (payload: any) => {
+        onDelete: (payload) => {
           console.log('📡 Watch Ads Video deleted:', payload);
           setVideos(prev => prev.filter(v => v.id !== payload.old?.id));
         }
       },
       {
         table: 'community_events',
-        onUpdate: (payload: any) => {
+        onUpdate: (payload) => {
           console.log('📡 Community Event updated:', payload);
           setEvents(prev => prev.map(event => 
             event.id === payload.new?.id ? { ...event, ...payload.new } : event
           ));
         },
-        onInsert: (payload: any) => {
+        onInsert: (payload) => {
           console.log('📡 New Community Event:', payload);
           setEvents(prev => {
             const next = [payload.new, ...prev] as CommunityEvent[];
@@ -956,7 +931,7 @@ export default function DiscoverEarnPage() {
             });
           });
         },
-        onDelete: (payload: any) => {
+        onDelete: (payload) => {
           console.log('📡 Community Event deleted:', payload);
           setEvents(prev => prev.filter(e => e.id !== payload.old?.id));
         }
